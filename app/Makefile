@@ -50,7 +50,7 @@ SUBDIRS= 					\
 	misc					\
 	pm					\
 	sjson					\
-	
+	rtl8370					\	
 
 endif # } PDIR
 
@@ -104,6 +104,7 @@ COMPONENTS_eagle.app.v6 = 			\
 	swTimer/libswtimer.a			\
 	misc/libmisc.a				\
 	sjson/libsjson.a			\
+	rtl8370/rtl8370lib.a			\
 	
 
 # Inspect the modules library and work out which modules need to be linked.
