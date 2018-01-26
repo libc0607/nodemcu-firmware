@@ -5,7 +5,7 @@ local sda_pin, sck_pin  = 5, 6
 
 -- init switch
 rtl8370.smi(sda_pin, sck_pin)
-rtl8370.init()
+rtl8370.switch_init()
 
 -- Set LED to force mode
 rtl8370.led_modeForce(0,3) 
