@@ -665,6 +665,62 @@ static int rtl8370_vlan_portFid(lua_State* L)
 
 
 
+// ================= spanning tree =====================
+
+// Lua: status = rtl8370.stp_init()
+static int rtl8370_stp_init(lua_State* L)
+{
+	uint32_t ret;
+
+	ret = rtk_stp_init();
+
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, stp_state] = rtl8370.stp_mstpState(msti, port[, stp_state])
+static int rtl8370_stp_mstpState(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_stp_msti_id_t msti;
+	rtk_port_t port;
+	rtk_stp_state_t stp_state;
+
+	if (argc == 2) {
+		// get
+		msti = luaL_checkinteger(L, 1);
+		port = luaL_checkinteger(L, 2);
+		
+		ret = rtk_stp_mstpState_get(msti, port, 
+						(rtk_stp_state_t *)&stp_state);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, stp_state);
+		
+		return 2;
+	}
+	else if (argc == 3) {
+		// set
+		msti = luaL_checkinteger(L, 1);
+		port = luaL_checkinteger(L, 2);
+		stp_state = luaL_checkinteger(L, 3);
+		
+		ret = rtk_stp_mstpState_set(msti, port, stp_state);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
+
 
 // Module function map
 static const LUA_REG_TYPE rtl8370_map[] = {
@@ -701,6 +757,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "vlan_protoAndPortBasedVlan" ), 	LFUNCVAL( rtl8370_vlan_protoAndPortBasedVlan )},
 	{ LSTRKEY( "vlan_portFid" ), 				LFUNCVAL( rtl8370_vlan_portFid )},
 	
+	// spanning tree
+	{ LSTRKEY( "stp_init" ), 					LFUNCVAL( rtl8370_stp_init )},
+	{ LSTRKEY( "stp_mstpState" ), 				LFUNCVAL( rtl8370_stp_mstpState )},
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -708,13 +768,13 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_SMI" ), 					LNUMVAL( RT_ERR_SMI ) },
 	{ LSTRKEY( "RT_ERR_INPUT" ), 				LNUMVAL( RT_ERR_INPUT ) },
 	{ LSTRKEY( "RT_ERR_PORT_ID" ), 				LNUMVAL( RT_ERR_PORT_ID ) },
-	{ LSTRKEY( "RT_ERR_VLAN_ACCEPT_FRAME_TYPE" ), LNUMVAL( RT_ERR_VLAN_ACCEPT_FRAME_TYPE ) },
+	{ LSTRKEY( "RT_ERR_VLAN_ACCEPT_FRAME_TYPE"),LNUMVAL( RT_ERR_VLAN_ACCEPT_FRAME_TYPE ) },
 	{ LSTRKEY( "RT_ERR_VLAN_VID" ), 			LNUMVAL( RT_ERR_VLAN_VID ) },
 	{ LSTRKEY( "RT_ERR_VLAN_PRIORITY" ), 		LNUMVAL( RT_ERR_VLAN_PRIORITY ) },
 	{ LSTRKEY( "RT_ERR_TBL_FULL" ), 			LNUMVAL( RT_ERR_TBL_FULL ) },
 	{ LSTRKEY( "RT_ERR_OUT_OF_RANGE" ), 		LNUMVAL( RT_ERR_OUT_OF_RANGE ) },
-	{ LSTRKEY( "RT_ERR_INPUT" ), 				LNUMVAL( RT_ERR_INPUT ) },
-	
+	{ LSTRKEY( "RT_ERR_MSTI" ), 				LNUMVAL( RT_ERR_MSTI ) },
+	{ LSTRKEY( "RT_ERR_MSTP_STATE" ), 			LNUMVAL( RT_ERR_MSTP_STATE ) },
 	
 	// end
 	{ LNILKEY, LNILVAL}
