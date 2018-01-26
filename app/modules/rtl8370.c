@@ -33,16 +33,8 @@
 #include "rtl8370_asicdrv_mib.h"
 #include "rtl8370_asicdrv_interrupt.h"
 
-// Lua: status = rtl8370.init()
-static int rtl8370_init(lua_State* L)
-{
-	uint32_t ret;
 
-	ret = rtk_switch_init();
-
-	lua_pushnumber(L, ret);
-	return 1;
-}
+// ============== esp8266 control functions ===========
 
 // Lua: status = rtl8370.smi(sda_pin, sck_pin)
 static int rtl8370_smi(lua_State* L)
@@ -86,6 +78,78 @@ static int rtl8370_softreset(lua_State* L)
 	lua_pushnumber(L, ret);
 	return 1;
 }
+
+
+// ================= switch misc =====================
+
+// Lua: status = rtl8370.switch_init()
+static int rtl8370_switch_init(lua_State* L)
+{
+	uint32_t ret;
+
+	ret = rtk_switch_init();
+
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, ret] = rtl8370.switch_maxPktLen(len)
+static int rtl8370_switch_maxPktLen(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_switch_maxPktLen_t len;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_switch_maxPktLen_get((rtk_switch_maxPktLen_t *)(&len));
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, len);
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		len = luaL_checkinteger(L, 1);
+		ret = rtk_switch_maxPktLen_set(len);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, ret] = rtl8370.switch_greenEthernet(len)
+static int rtl8370_switch_greenEthernet(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_switch_greenEthernet_get((rtk_enable_t *)(&enable));
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		ret = rtk_switch_greenEthernet_set(enable);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+// ===================== led =========================
 
 // Lua: status[, ret] = rtl8370.led.enable(group[, port_mask])
 static int rtl8370_led_enable(lua_State* L)
@@ -605,11 +669,17 @@ static int rtl8370_vlan_portFid(lua_State* L)
 // Module function map
 static const LUA_REG_TYPE rtl8370_map[] = {
 	
-	// device functions
-	{ LSTRKEY( "init" ), 						LFUNCVAL( rtl8370_init )},
+	// esp8266 control functions
 	{ LSTRKEY( "smi" ), 						LFUNCVAL( rtl8370_smi )},
 	{ LSTRKEY( "hardreset" ), 					LFUNCVAL( rtl8370_hardreset )},
 	{ LSTRKEY( "softreset" ), 					LFUNCVAL( rtl8370_softreset )},
+	
+	
+	// switch
+	{ LSTRKEY( "switch_init" ), 				LFUNCVAL( rtl8370_switch_init )},
+	{ LSTRKEY( "switch_maxPktLen" ), 			LFUNCVAL( rtl8370_switch_maxPktLen )},
+	{ LSTRKEY( "switch_greenEthernet" ), 		LFUNCVAL( rtl8370_switch_greenEthernet )},
+	
 	
 	// led functions
 	{ LSTRKEY( "led_serialMode" ), 				LFUNCVAL ( rtl8370_led_serialMode ) },
@@ -619,6 +689,7 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "led_mode" ), 					LFUNCVAL ( rtl8370_led_mode ) },
 	{ LSTRKEY( "led_operation" ), 				LFUNCVAL ( rtl8370_led_operation ) },
 	{ LSTRKEY( "led_enable" ), 					LFUNCVAL ( rtl8370_led_enable ) },
+	
 	
 	// vlan functions
 	{ LSTRKEY( "vlan_init" ), 					LFUNCVAL( rtl8370_vlan_init )},
@@ -643,6 +714,7 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_TBL_FULL" ), 			LNUMVAL( RT_ERR_TBL_FULL ) },
 	{ LSTRKEY( "RT_ERR_OUT_OF_RANGE" ), 		LNUMVAL( RT_ERR_OUT_OF_RANGE ) },
 	{ LSTRKEY( "RT_ERR_INPUT" ), 				LNUMVAL( RT_ERR_INPUT ) },
+	
 	
 	// end
 	{ LNILKEY, LNILVAL}
