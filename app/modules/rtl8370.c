@@ -80,6 +80,7 @@ static int rtl8370_softreset(lua_State* L)
 }
 
 
+
 // ================= switch misc =====================
 
 // Lua: status = rtl8370.switch_init()
@@ -719,6 +720,82 @@ static int rtl8370_stp_mstpState(lua_State* L)
 
 
 
+// ================= port mirroring =====================
+
+// Lua: status[, mirrored_rx_portmask, mirrored_tx_portmask] = rtl8370.mirror_portBased(mirroring_port[, mirrored_rx_portmask, mirrored_tx_portmask])
+static int rtl8370_mirror_portBased(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_portmask_t mirrored_rx_portmask;
+	rtk_portmask_t mirrored_tx_portmask;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_mirror_portBased_get((rtk_port_t *)&port, 
+						(rtk_portmask_t *)&mirrored_rx_portmask, 
+						(rtk_portmask_t *)&mirrored_tx_portmask);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, mirrored_rx_portmask.bits[0]);
+		lua_pushnumber(L, mirrored_tx_portmask.bits[0]);
+		
+		return 3;
+	}
+	else if (argc == 3) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		mirrored_rx_portmask.bits[0] = luaL_checkinteger(L, 2);
+		mirrored_tx_portmask.bits[0] = luaL_checkinteger(L, 3);
+		
+		ret = rtk_mirror_portBased_set(port, &mirrored_rx_portmask, &mirrored_tx_portmask);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.mirror_portIso([enable])
+static int rtl8370_mirror_portIso(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+
+	if (argc == 0) {
+		// get
+		
+		ret = rtk_mirror_portIso_get((rtk_enable_t *)&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_mirror_portIso_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
 
 
 
@@ -757,9 +834,15 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "vlan_protoAndPortBasedVlan" ), 	LFUNCVAL( rtl8370_vlan_protoAndPortBasedVlan )},
 	{ LSTRKEY( "vlan_portFid" ), 				LFUNCVAL( rtl8370_vlan_portFid )},
 	
+	
 	// spanning tree
 	{ LSTRKEY( "stp_init" ), 					LFUNCVAL( rtl8370_stp_init )},
 	{ LSTRKEY( "stp_mstpState" ), 				LFUNCVAL( rtl8370_stp_mstpState )},
+	
+	
+	// port mirroring
+	{ LSTRKEY( "mirror_portBased" ), 			LFUNCVAL( rtl8370_mirror_portBased )},
+	{ LSTRKEY( "mirror_portIso" ), 				LFUNCVAL( rtl8370_mirror_portIso )},
 	
 	
 	// Return numbers
@@ -775,6 +858,9 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_OUT_OF_RANGE" ), 		LNUMVAL( RT_ERR_OUT_OF_RANGE ) },
 	{ LSTRKEY( "RT_ERR_MSTI" ), 				LNUMVAL( RT_ERR_MSTI ) },
 	{ LSTRKEY( "RT_ERR_MSTP_STATE" ), 			LNUMVAL( RT_ERR_MSTP_STATE ) },
+	{ LSTRKEY( "RT_ERR_PORT_MASK" ), 			LNUMVAL( RT_ERR_PORT_MASK ) },
+
+	
 	
 	// end
 	{ LNILKEY, LNILVAL}
