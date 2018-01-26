@@ -797,6 +797,105 @@ static int rtl8370_mirror_portIso(lua_State* L)
 
 
 
+// ================= port trunk =====================
+
+// Lua: status[, trunk_member_portmask] = rtl8370.trunk_port(trk_gid[, trunk_member_portmask])
+static int rtl8370_trunk_port(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_trunk_group_t trk_gid;
+	rtk_portmask_t trunk_member_portmask;
+
+	if (argc == 1) {
+		// get
+		trk_gid = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trunk_port_get(trk_gid, (rtk_portmask_t *)&trunk_member_portmask);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, trunk_member_portmask.bits[0]);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		trk_gid = luaL_checkinteger(L, 1);
+		trunk_member_portmask.bits[0] = luaL_checkinteger(L, 2);
+		
+		ret = rtk_trunk_port_set(trk_gid, trunk_member_portmask);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, algo_bitmask] = rtl8370.trunk_distributionAlgorithm(trk_gid[, algo_bitmask])
+static int rtl8370_trunk_distributionAlgorithm(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_trunk_group_t trk_gid;
+	rtk_trunk_hashVal2Port_t algo_bitmask;
+
+	if (argc == 1) {
+		// get
+		trk_gid = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trunk_distributionAlgorithm_get(trk_gid, (rtk_trunk_hashVal2Port_t *)&algo_bitmask);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, algo_bitmask.value[0]);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		trk_gid = luaL_checkinteger(L, 1);
+		algo_bitmask.value[0] = luaL_checkinteger(L, 2);
+		
+		ret = rtk_trunk_distributionAlgorithm_set(trk_gid, algo_bitmask);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status, portmask = rtl8370.trunk_queueEmptyStatus()
+static int rtl8370_trunk_queueEmptyStatus(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_portmask_t portmask;
+
+	if (argc == 0) {
+		// get
+		// qeueu? 这个干啥用的啊
+		ret = rtk_trunk_qeueuEmptyStatus_get((rtk_portmask_t *)&portmask);
+		
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, portmask.bits[0]);
+		
+		return 2;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
+
 
 
 // Module function map
@@ -843,6 +942,13 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	// port mirroring
 	{ LSTRKEY( "mirror_portBased" ), 			LFUNCVAL( rtl8370_mirror_portBased )},
 	{ LSTRKEY( "mirror_portIso" ), 				LFUNCVAL( rtl8370_mirror_portIso )},
+
+
+	// Port Trunk
+	{ LSTRKEY( "trunk_port" ), 					LFUNCVAL( rtl8370_trunk_port )},
+	{ LSTRKEY( "trunk_distributionAlgorithm" ), LFUNCVAL( rtl8370_trunk_distributionAlgorithm )},
+	{ LSTRKEY( "trunk_queueEmptyStatus" ), 		LFUNCVAL( rtl8370_trunk_queueEmptyStatus )},
+	
 	
 	
 	// Return numbers
@@ -859,6 +965,8 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_MSTI" ), 				LNUMVAL( RT_ERR_MSTI ) },
 	{ LSTRKEY( "RT_ERR_MSTP_STATE" ), 			LNUMVAL( RT_ERR_MSTP_STATE ) },
 	{ LSTRKEY( "RT_ERR_PORT_MASK" ), 			LNUMVAL( RT_ERR_PORT_MASK ) },
+	{ LSTRKEY( "RT_ERR_LA_TRUNK_ID" ), 			LNUMVAL( RT_ERR_LA_TRUNK_ID ) },
+	{ LSTRKEY( "RT_ERR_LA_HASHMASK" ), 			LNUMVAL( RT_ERR_LA_HASHMASK ) },
 
 	
 	
