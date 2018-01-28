@@ -1361,8 +1361,77 @@ static int rtl8370_stat_port(lua_State* L)
 
 
 
+//=================== Leaky ============================
 
+// Lua: status[, enable]= rtl8370.leaky_vlan(type[, enable])
+static int rtl8370_leaky_vlan(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_leaky_type_t type;
+	rtk_enable_t enable;
 
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_leaky_vlan_get(type, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_leaky_vlan_set(type, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.leaky_portIsolation(type[, enable])
+static int rtl8370_leaky_portIsolation(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_leaky_type_t type;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_leaky_portIsolation_get(type, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_leaky_portIsolation_set(type, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
 
 
 
@@ -1453,7 +1522,11 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "stat_global" ), 				LFUNCVAL( rtl8370_stat_global )},
 	{ LSTRKEY( "stat_port" ), 					LFUNCVAL( rtl8370_stat_port )},
 
+	// Leaky
+	{ LSTRKEY( "leaky_vlan" ), 					LFUNCVAL( rtl8370_leaky_vlan )},
+	{ LSTRKEY( "leaky_portIsolation" ), 		LFUNCVAL( rtl8370_leaky_portIsolation )},
 	
+		
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
