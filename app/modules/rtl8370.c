@@ -1435,6 +1435,78 @@ static int rtl8370_leaky_portIsolation(lua_State* L)
 
 
 
+//=================== CPU Port ============================
+
+// Lua: status[, enable]= rtl8370.cpu_enable[enable])
+static int rtl8370_cpu_enable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_cpu_enable_get(&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_cpu_enable_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, port, mode]= rtl8370.cpu_tagPort([port, mode])
+static int rtl8370_cpu_tagPort(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_cpu_insert_t mode;
+
+	if (argc == 0) {
+		// get
+		
+		ret = rtk_cpu_tagPort_get(&port, &mode);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, port);
+		lua_pushnumber(L, mode);
+		
+		return 3;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		mode = luaL_checkinteger(L, 2);
+		
+		ret = rtk_cpu_tagPort_set(port, mode);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
 
 
 
@@ -1522,9 +1594,15 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "stat_global" ), 				LFUNCVAL( rtl8370_stat_global )},
 	{ LSTRKEY( "stat_port" ), 					LFUNCVAL( rtl8370_stat_port )},
 
+	
 	// Leaky
 	{ LSTRKEY( "leaky_vlan" ), 					LFUNCVAL( rtl8370_leaky_vlan )},
 	{ LSTRKEY( "leaky_portIsolation" ), 		LFUNCVAL( rtl8370_leaky_portIsolation )},
+	
+	
+	// CPU Port
+	{ LSTRKEY( "cpu_enable" ), 					LFUNCVAL( rtl8370_cpu_enable )},
+	{ LSTRKEY( "cpu_tagPort" ), 				LFUNCVAL( rtl8370_cpu_tagPort )},
 	
 		
 	
