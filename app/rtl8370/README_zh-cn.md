@@ -9,7 +9,10 @@ RTL8370 API 来自 [Sorceforge/rtl819x](https://sourceforge.net/projects/rtl819x
 
 LED 有关的 API 已经初步包装好了，测试过其中的几个。  
 
-其他的全都没写。。  
+点亮 LED 的测试： [YouTube - 用 NodeMCU 控制 RTL8370 的千兆交换机](https://youtu.be/TsPTUKKPerY)  
+
+
+其他的全都没测试。。  
 
 ## 示例程序 
 ---
