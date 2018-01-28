@@ -1096,6 +1096,53 @@ static int rtl8370_rate_egrQueueBwCtrlRate(lua_State* L)
 
 
 
+//=================== EEE ============================
+
+// Lua: status = rtl8370.eee_init()
+static int rtl8370_eee_init(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	
+	ret = rtk_eee_init();
+	
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, enable]= rtl8370.eee_portEnable(port[, enable])
+static int rtl8370_eee_portEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_eee_portEnable_get(port, (rtk_data_t *)&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_eee_portEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
 
 
 
@@ -1160,6 +1207,11 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "rate_egrBandwidthCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrBandwidthCtrlRate )},
 	{ LSTRKEY( "rate_egrQueueBwCtrlEnable" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlEnable )},
 	{ LSTRKEY( "rate_egrQueueBwCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlRate )},
+
+	
+	// EEE
+	{ LSTRKEY( "eee_init" ), 					LFUNCVAL( rtl8370_eee_init )},
+	{ LSTRKEY( "eee_portEnable" ), 				LFUNCVAL( rtl8370_eee_portEnable )},
 
 
 	
