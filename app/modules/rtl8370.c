@@ -1193,6 +1193,97 @@ static int rtl8370_aldp_enable(lua_State* L)
 
 
 
+// ================= Storm =====================
+
+// Lua: status[, rate, ifg_include] = rtl8370.storm_controlRate(port, storm_type, mode[, rate, ifg_include])
+static int rtl8370_storm_controlRate(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_rate_storm_group_t storm_type;
+	rtk_rate_t rate;
+	rtk_enable_t ifg_include;
+	uint32 mode;
+
+	if (argc == 3) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		storm_type = luaL_checkinteger(L, 2);
+		mode = luaL_checkinteger(L, 3);
+		
+		ret = rtk_storm_controlRate_get(port, storm_type, (rtk_rate_t *)&rate, 
+						(rtk_enable_t *)&ifg_include, mode);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, rate);
+		lua_pushnumber(L, ifg_include);
+		
+		return 3;
+	}
+	else if (argc == 5) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		storm_type = luaL_checkinteger(L, 2);
+		mode = luaL_checkinteger(L, 3);
+		rate = luaL_checkinteger(L, 4);
+		ifg_include = luaL_checkinteger(L, 5);
+		
+		ret = rtk_storm_controlRate_set(port, storm_type, rate, ifg_include, mode);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.storm_bypass(type[, enable])
+static int rtl8370_storm_bypass(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_storm_bypass_t type;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_storm_bypass_get(type, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_storm_bypass_set(type, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1266,6 +1357,11 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "aldp_enable" ), 				LFUNCVAL( rtl8370_aldp_enable )},
 
 	
+	// Storm
+	{ LSTRKEY( "storm_controlRate" ), 			LFUNCVAL( rtl8370_storm_controlRate )},
+	{ LSTRKEY( "storm_bypass" ), 				LFUNCVAL( rtl8370_storm_bypass )},
+
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -1289,6 +1385,7 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_INBW_RATE" ), 			LNUMVAL( RT_ERR_INBW_RATE ) },
 	{ LSTRKEY( "RT_ERR_QUEUE_ID" ), 			LNUMVAL( RT_ERR_QUEUE_ID ) },
 	{ LSTRKEY( "RT_ERR_NULL_POINTER" ), 		LNUMVAL( RT_ERR_NULL_POINTER ) },
+	{ LSTRKEY( "RT_ERR_SFC_UNKNOWN_GROUP" ), 	LNUMVAL( RT_ERR_SFC_UNKNOWN_GROUP ) },
 	
 
 	
