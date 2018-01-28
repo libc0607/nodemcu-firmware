@@ -1277,6 +1277,91 @@ static int rtl8370_storm_bypass(lua_State* L)
 
 
 
+//=================== Stat ============================
+
+// Lua: status = rtl8370.stat_globalReset()
+static int rtl8370_stat_globalReset(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	
+	ret = rtk_stat_global_reset();
+	
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status = rtl8370.stat_portReset(port)
+static int rtl8370_stat_portReset(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+	
+		ret = rtk_stat_port_reset(port);
+
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status, counter = rtl8370.stat_global()		
+// Note: cntr_idx only can be DOT1D_TP_LEARNED_ENTRY_DISCARDS_INDEX
+// so argc should be 0
+static int rtl8370_stat_global(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_stat_counter_t cntr_idx;
+	
+	if (argc == 0) {
+		// get		
+		ret = rtk_stat_global_get(DOT1D_TP_LEARNED_ENTRY_DISCARDS_INDEX, &cntr_idx);
+
+		lua_pushnumber(L, cntr_idx);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status, cntr = rtl8370.stat_port(port, cntr_idx)		
+static int rtl8370_stat_port(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_stat_port_type_t cntr_idx;
+	rtk_stat_counter_t cntr;
+	
+	if (argc == 2) {
+		// get		
+		port = luaL_checkinteger(L, 1);
+		cntr_idx = luaL_checkinteger(L, 2);
+		
+		ret = rtk_stat_port_get(port, cntr_idx, &cntr);
+
+		lua_pushnumber(L, cntr);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
 
 
 
@@ -1360,6 +1445,13 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	// Storm
 	{ LSTRKEY( "storm_controlRate" ), 			LFUNCVAL( rtl8370_storm_controlRate )},
 	{ LSTRKEY( "storm_bypass" ), 				LFUNCVAL( rtl8370_storm_bypass )},
+
+	
+	// Statistics
+	{ LSTRKEY( "stat_globalReset" ), 			LFUNCVAL( rtl8370_stat_globalReset )},
+	{ LSTRKEY( "stat_portReset" ), 				LFUNCVAL( rtl8370_stat_portReset )},
+	{ LSTRKEY( "stat_global" ), 				LFUNCVAL( rtl8370_stat_global )},
+	{ LSTRKEY( "stat_port" ), 					LFUNCVAL( rtl8370_stat_port )},
 
 	
 	
