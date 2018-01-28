@@ -1146,6 +1146,53 @@ static int rtl8370_eee_portEnable(lua_State* L)
 
 
 
+//=================== ALDP ============================
+
+// Lua: status = rtl8370.aldp_init()
+static int rtl8370_aldp_init(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	
+	ret = rtk_aldp_init();
+	
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, enable]= rtl8370.aldp_enable([enable])
+static int rtl8370_aldp_enable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		
+		ret = rtk_aldp_enable_get((rtk_data_t *)&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_aldp_enable_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
 
 
 
@@ -1213,6 +1260,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "eee_init" ), 					LFUNCVAL( rtl8370_eee_init )},
 	{ LSTRKEY( "eee_portEnable" ), 				LFUNCVAL( rtl8370_eee_portEnable )},
 
+
+	// ALDP
+	{ LSTRKEY( "aldp_init" ), 					LFUNCVAL( rtl8370_aldp_init )},
+	{ LSTRKEY( "aldp_enable" ), 				LFUNCVAL( rtl8370_aldp_enable )},
 
 	
 	
