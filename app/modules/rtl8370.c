@@ -878,7 +878,7 @@ static int rtl8370_trunk_queueEmptyStatus(lua_State* L)
 
 	if (argc == 0) {
 		// get
-		// qeueu? Õâ¸ö¸ÉÉ¶ÓÃµÄ°¡
+		// qeueu? è¿™ä¸ªå¹²å•¥ç”¨çš„å•Š
 		ret = rtk_trunk_qeueuEmptyStatus_get((rtk_portmask_t *)&portmask);
 		
 		lua_pushnumber(L, ret);
@@ -891,6 +891,210 @@ static int rtl8370_trunk_queueEmptyStatus(lua_State* L)
 		return 1;
 	}
 }
+
+
+
+// ================= Rate =====================
+
+// Lua: status[, rate, ifg_include] = rtl8370.rate_shareMeter(index[, rate, ifg_include])
+static int rtl8370_rate_shareMeter(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_meter_id_t index;
+	rtk_rate_t rate;
+	rtk_enable_t ifg_include;
+
+	if (argc == 1) {
+		// get
+		index = luaL_checkinteger(L, 1);
+		
+		ret = rtk_rate_shareMeter_get(index, (rtk_rate_t *)&rate, 
+						(rtk_enable_t *)&ifg_include);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, rate);
+		lua_pushnumber(L, ifg_include);
+		
+		return 3;
+	}
+	else if (argc == 3) {
+		// set
+		index = luaL_checkinteger(L, 1);
+		rate = luaL_checkinteger(L, 2);
+		ifg_include = luaL_checkinteger(L, 3);
+		
+		ret = rtk_rate_shareMeter_set(index, rate, ifg_include);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, rate, ifg_include, fc_enable] = rtl8370.rate_igrBandwidthCtrlRate(port[, rate, ifg_include, fc_enable])
+static int rtl8370_rate_igrBandwidthCtrlRate(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_rate_t rate;
+	rtk_enable_t ifg_include;
+	rtk_enable_t fc_enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_rate_igrBandwidthCtrlRate_get(port, (rtk_rate_t *)&rate, 
+						(rtk_enable_t *)&ifg_include, (rtk_enable_t *)&fc_enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, rate);
+		lua_pushnumber(L, ifg_include);
+		lua_pushnumber(L, fc_enable);
+		
+		return 4;
+	}
+	else if (argc == 4) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		rate = luaL_checkinteger(L, 2);
+		ifg_include = luaL_checkinteger(L, 3);
+		fc_enable = luaL_checkinteger(L, 4);
+		
+		ret = rtk_rate_igrBandwidthCtrlRate_set(port, rate, ifg_include, fc_enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, rate, ifg_include] = rtl8370.rate_egrBandwidthCtrlRate(port[, rate, ifg_include])
+static int rtl8370_rate_egrBandwidthCtrlRate(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_rate_t rate;
+	rtk_enable_t ifg_include;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_rate_egrBandwidthCtrlRate_get(port, (rtk_rate_t *)&rate, 
+						(rtk_enable_t *)&ifg_include);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, rate);
+		lua_pushnumber(L, ifg_include);
+		
+		return 3;
+	}
+	else if (argc == 3) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		rate = luaL_checkinteger(L, 2);
+		ifg_include = luaL_checkinteger(L, 3);
+		
+		ret = rtk_rate_egrBandwidthCtrlRate_set(port, rate, ifg_include);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.rate_egrQueueBwCtrlEnable(port, queue[, enable])
+static int rtl8370_rate_egrQueueBwCtrlEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_qid_t queue;
+	rtk_enable_t enable;
+
+	if (argc == 2) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		queue = luaL_checkinteger(L, 2);
+		
+		ret = rtk_rate_egrQueueBwCtrlEnable_get(port, queue, 
+						(rtk_enable_t *)&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 3) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		queue = luaL_checkinteger(L, 2);
+		enable = luaL_checkinteger(L, 3);
+		
+		ret = rtk_rate_egrQueueBwCtrlEnable_set(port, queue, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, index]= rtl8370.rate_egrQueueBwCtrlRate(port, queue[, index])
+static int rtl8370_rate_egrQueueBwCtrlRate(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_qid_t queue;
+	rtk_data_t index;
+
+	if (argc == 2) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		queue = luaL_checkinteger(L, 2);
+		
+		ret = rtk_rate_egrQueueBwCtrlRate_get(port, queue, 
+						(rtk_data_t *)&index);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, index);
+		
+		return 2;
+	}
+	else if (argc == 3) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		queue = luaL_checkinteger(L, 2);
+		index = luaL_checkinteger(L, 3);
+		
+		ret = rtk_rate_egrQueueBwCtrlRate_set(port, queue, index);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
 
 
 
@@ -950,6 +1154,15 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "trunk_queueEmptyStatus" ), 		LFUNCVAL( rtl8370_trunk_queueEmptyStatus )},
 	
 	
+	// Rate
+	{ LSTRKEY( "rate_shareMeter" ), 			LFUNCVAL( rtl8370_rate_shareMeter )},
+	{ LSTRKEY( "rate_igrBandwidthCtrlRate" ), 	LFUNCVAL( rtl8370_rate_igrBandwidthCtrlRate )},
+	{ LSTRKEY( "rate_egrBandwidthCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrBandwidthCtrlRate )},
+	{ LSTRKEY( "rate_egrQueueBwCtrlEnable" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlEnable )},
+	{ LSTRKEY( "rate_egrQueueBwCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlRate )},
+
+
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -967,6 +1180,13 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_PORT_MASK" ), 			LNUMVAL( RT_ERR_PORT_MASK ) },
 	{ LSTRKEY( "RT_ERR_LA_TRUNK_ID" ), 			LNUMVAL( RT_ERR_LA_TRUNK_ID ) },
 	{ LSTRKEY( "RT_ERR_LA_HASHMASK" ), 			LNUMVAL( RT_ERR_LA_HASHMASK ) },
+	{ LSTRKEY( "RT_ERR_FILTER_METER_ID" ), 		LNUMVAL( RT_ERR_FILTER_METER_ID ) },
+	{ LSTRKEY( "RT_ERR_RATE" ), 				LNUMVAL( RT_ERR_RATE ) },
+	{ LSTRKEY( "RT_ERR_ENABLE" ), 				LNUMVAL( RT_ERR_ENABLE ) },
+	{ LSTRKEY( "RT_ERR_INBW_RATE" ), 			LNUMVAL( RT_ERR_INBW_RATE ) },
+	{ LSTRKEY( "RT_ERR_QUEUE_ID" ), 			LNUMVAL( RT_ERR_QUEUE_ID ) },
+	{ LSTRKEY( "RT_ERR_NULL_POINTER" ), 		LNUMVAL( RT_ERR_NULL_POINTER ) },
+	
 
 	
 	
