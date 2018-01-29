@@ -2005,6 +2005,135 @@ static int rtl8370_qos_dscpRemark(lua_State* L)
 
 
 
+//=================== Interrupt ============================
+// Note: Only RTL8370M has external interrupt pin.
+
+// Lua: status[, type] = rtl8370.int_polarity([type])
+static int rtl8370_int_polarity(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_int_polarity_t type;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_int_polarity_get(&type);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, type);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		//set
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_int_polarity_set(type);
+
+		lua_pushnumber(L, ret);
+		
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.int_control(type[, enable])
+static int rtl8370_int_control(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_int_type_t type;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_int_control_get(type, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_int_control_set(type, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, statusMask] = rtl8370.int_status([statusMask])
+static int rtl8370_int_status(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_int_status_t statusMask;
+
+	if (argc == 0) {
+		// get
+
+		ret = rtk_int_status_get(&statusMask);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, statusMask.value[0]);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		//set
+		statusMask.value[0] = luaL_checkinteger(L, 1);
+		
+		ret = rtk_int_status_set(statusMask);
+
+		lua_pushnumber(L, ret);
+		
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.int_advanceInfo(type[, enable])
+static int rtl8370_int_advanceInfo(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_int_advType_t adv_type;
+	rtk_int_info_t info;
+
+	if (argc == 1) {
+		// get
+		adv_type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_int_advanceInfo_get(adv_type, &info);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, info);
+		
+		return 2;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
 
 
 
