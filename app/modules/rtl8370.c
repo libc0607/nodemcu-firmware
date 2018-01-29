@@ -2136,8 +2136,6 @@ static int rtl8370_int_advanceInfo(lua_State* L)
 
 
 
-
-
 // Module function map
 static const LUA_REG_TYPE rtl8370_map[] = {
 	
@@ -2244,7 +2242,14 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "qos_dscpRemarkEnable" ), 		LFUNCVAL( rtl8370_qos_dscpRemarkEnable )},
 	{ LSTRKEY( "qos_dscpRemark" ), 				LFUNCVAL( rtl8370_qos_dscpRemark )},
 	
-		
+	
+	// Interrupt
+	{ LSTRKEY( "int_polarity" ), 				LFUNCVAL( rtl8370_int_polarity )},
+	{ LSTRKEY( "int_control" ), 				LFUNCVAL( rtl8370_int_control )},
+	{ LSTRKEY( "int_status" ), 					LFUNCVAL( rtl8370_int_status )},
+	{ LSTRKEY( "int_advanceInfo" ), 			LFUNCVAL( rtl8370_int_advanceInfo )},
+
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
