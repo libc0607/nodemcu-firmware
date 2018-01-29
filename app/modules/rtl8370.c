@@ -1437,7 +1437,7 @@ static int rtl8370_leaky_portIsolation(lua_State* L)
 
 //=================== CPU Port ============================
 
-// Lua: status[, enable]= rtl8370.cpu_enable[enable])
+// Lua: status[, enable]= rtl8370.cpu_enable([enable])
 static int rtl8370_cpu_enable(lua_State* L)
 {
 	uint32_t argc = lua_gettop(L);
@@ -1506,6 +1506,502 @@ static int rtl8370_cpu_tagPort(lua_State* L)
 }
 
 
+
+//=================== QoS ============================
+
+// Lua: status = rtl8370.qos_init([queueNum])
+static int rtl8370_qos_init(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_queue_num_t queueNum;
+
+	if (argc == 1) {
+		
+		queueNum = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_init(queueNum);
+
+		lua_pushnumber(L, ret);
+		
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, {port, dot1q, acl, dscp, cvlan, svlan, dmac, smac}] 
+//			= rtl8370.qos_priSel({port, dot1q, acl, dscp, cvlan, svlan, dmac, smac})
+static int rtl8370_qos_priSel(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_priority_select_t priDec;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_qos_priSel_get(&priDec);
+
+		lua_pushnumber(L, ret);
+		lua_newtable(L);
+		
+		// To-do: optimize these shit code
+		lua_pushstring(L, "port");	// key
+		lua_pushnumber(L, priDec.port_pri);	// value
+		lua_settable(L, -3);
+		lua_pushstring(L, "dot1q");	
+		lua_pushnumber(L, priDec.dot1q_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "acl");	
+		lua_pushnumber(L, priDec.acl_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "dscp");	
+		lua_pushnumber(L, priDec.dscp_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "cvlan");	
+		lua_pushnumber(L, priDec.cvlan_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "svlan");	
+		lua_pushnumber(L, priDec.svlan_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "dmac");	
+		lua_pushnumber(L, priDec.dmac_pri);	
+		lua_settable(L, -3);
+		lua_pushstring(L, "smac");	
+		lua_pushnumber(L, priDec.smac_pri);	
+		lua_settable(L, -3);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		// To-do: optimize these shit code
+		lua_pushstring(L, "port");
+		lua_gettable(L, -2);
+		priDec.port_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "dot1q");
+		lua_gettable(L, -2);
+		priDec.dot1q_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "acl");
+		lua_gettable(L, -2);
+		priDec.acl_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "dscp");	
+		lua_gettable(L, -2);
+		priDec.dscp_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "cvlan");
+		lua_gettable(L, -2);
+		priDec.cvlan_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "svlan");
+		lua_gettable(L, -2);
+		priDec.svlan_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "dmac");
+		lua_gettable(L, -2);
+		priDec.dmac_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		lua_pushstring(L, "smac");	
+		lua_gettable(L, -2);
+		priDec.smac_pri = luaL_checkinteger(L, 1);
+		lua_pop(L, 1);
+		
+		ret = rtk_qos_priSel_set(&priDec);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, int_pri]= rtl8370.qos_1pPriRemap(dot1p_pri[, int_pri])
+static int rtl8370_qos_1pPriRemap(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_pri_t dot1p_pri;
+	rtk_pri_t int_pri;
+
+	if (argc == 1) {
+		// get
+		dot1p_pri = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_1pPriRemap_get(dot1p_pri, &int_pri);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, int_pri);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		dot1p_pri = luaL_checkinteger(L, 1);
+		int_pri = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_1pPriRemap_set(dot1p_pri, int_pri);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, int_pri]= rtl8370.qos_dscpPriRemap(dscp[, int_pri])
+static int rtl8370_qos_dscpPriRemap(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_dscp_t dscp;
+	rtk_pri_t int_pri;
+
+	if (argc == 1) {
+		// get
+		dscp = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_dscpPriRemap_get(dscp, &int_pri);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, int_pri);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		dscp = luaL_checkinteger(L, 1);
+		int_pri = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_dscpPriRemap_set(dscp, int_pri);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, int_pri]= rtl8370.qos_portPri(port[, int_pri])
+static int rtl8370_qos_portPri(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_pri_t int_pri;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_portPri_get(port, &int_pri);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, int_pri);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		int_pri = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_portPri_set(port, int_pri);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, queue_num]= rtl8370.qos_queueNum(port[, queue_num])
+static int rtl8370_qos_queueNum(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_queue_num_t queue_num;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_queueNum_get(port, &queue_num);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, queue_num);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		queue_num = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_queueNum_set(port, queue_num);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, {queue1_pri, ..., queue8_pri}] 
+//			= rtl8370.qos_priMap(queue_num[, {queue1_pri, ..., queue8_pri}])
+static int rtl8370_qos_priMap(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_queue_num_t queue_num;
+	rtk_qos_pri2queue_t pri2qid;
+
+	if (argc == 1) {
+		// get
+		queue_num = luaL_checkinteger(L, 1);
+		ret = rtk_qos_priMap_get(queue_num, &pri2qid);
+
+		lua_pushnumber(L, ret);
+		
+		lua_newtable(L); 
+		for (int i=0; i<8; i++) {
+			lua_pushnumber(L, i+1);					// key
+			lua_pushnumber(L, pri2qid.pri2queue[i]);// value
+			lua_settable(L, -3);
+		} 
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		queue_num = luaL_checkinteger(L, 1);
+		
+		for (int i=0; i<8; i++) {
+			lua_pushnumber(L, i+1);		// push key
+			lua_gettable(L, -2);		// get value at -1 from table at -2
+			pri2qid.pri2queue[i] = luaL_checkinteger(L, -1);
+			lua_pop(L, 1);
+		}
+		
+		ret = rtk_qos_priMap_set(queue_num, &pri2qid);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, {queue1_weight, ..., queue8_weight}] 
+//         	= rtl8370.qos_schedulingQueue(port[, {queue1_weight, ..., queue8_weight}])
+static int rtl8370_qos_schedulingQueue(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_qos_queue_weights_t qWeights;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		ret = rtk_qos_schedulingQueue_get(port, &qWeights);
+
+		lua_pushnumber(L, ret);
+		
+		lua_newtable(L); 
+		for (int i=0; i<8; i++) {
+			lua_pushnumber(L, i+1);					// key
+			lua_pushnumber(L, qWeights.weights[i]);// value
+			lua_settable(L, -3);
+		} 
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		
+		for (int i=0; i<8; i++) {
+			lua_pushnumber(L, i+1);		// push key
+			lua_gettable(L, -2);		// get value at -1 from table at -2
+			qWeights.weights[i] = luaL_checkinteger(L, -1);
+			lua_pop(L, 1);
+		}
+		
+		ret = rtk_qos_schedulingQueue_set(port, &qWeights);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.qos_1pRemarkEnable(port[, enable])
+static int rtl8370_qos_1pRemarkEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_1pRemarkEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_1pRemarkEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, dot1p_pri]= rtl8370.qos_1pRemark(int_pri[, dot1p_pri])
+static int rtl8370_qos_1pRemark(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_pri_t int_pri;
+	rtk_pri_t dot1p_pri;
+
+	if (argc == 1) {
+		// get
+		int_pri = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_1pRemark_get(int_pri, &dot1p_pri);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, dot1p_pri);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		int_pri = luaL_checkinteger(L, 1);
+		dot1p_pri = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_1pRemark_set(int_pri, dot1p_pri);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.qos_dscpRemarkEnable(port[, enable])
+static int rtl8370_qos_dscpRemarkEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_dscpRemarkEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_dscpRemarkEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, dscp]= rtl8370.qos_dscpRemark(int_pri[, dscp])
+static int rtl8370_qos_dscpRemark(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_pri_t int_pri;
+	rtk_dscp_t dscp;
+
+	if (argc == 1) {
+		// get
+		int_pri = luaL_checkinteger(L, 1);
+		
+		ret = rtk_qos_dscpRemark_get(int_pri, &dscp);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, dscp);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		int_pri = luaL_checkinteger(L, 1);
+		dscp = luaL_checkinteger(L, 2);
+		
+		ret = rtk_qos_dscpRemark_set(int_pri, dscp);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
 
 
 
@@ -1604,6 +2100,21 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "cpu_enable" ), 					LFUNCVAL( rtl8370_cpu_enable )},
 	{ LSTRKEY( "cpu_tagPort" ), 				LFUNCVAL( rtl8370_cpu_tagPort )},
 	
+	
+	// QoS
+	{ LSTRKEY( "qos_init" ), 					LFUNCVAL( rtl8370_qos_init )},
+	{ LSTRKEY( "qos_priSel" ), 					LFUNCVAL( rtl8370_qos_priSel )},
+	{ LSTRKEY( "qos_1pPriRemap" ), 				LFUNCVAL( rtl8370_qos_1pPriRemap )},
+	{ LSTRKEY( "qos_dscpPriRemap" ), 			LFUNCVAL( rtl8370_qos_dscpPriRemap )},
+	{ LSTRKEY( "qos_portPri" ), 				LFUNCVAL( rtl8370_qos_portPri )},
+	{ LSTRKEY( "qos_queueNum" ), 				LFUNCVAL( rtl8370_qos_queueNum )},
+	{ LSTRKEY( "qos_priMap" ), 					LFUNCVAL( rtl8370_qos_priMap )},
+	{ LSTRKEY( "qos_schedulingQueue" ), 		LFUNCVAL( rtl8370_qos_schedulingQueue )},
+	{ LSTRKEY( "qos_1pRemarkEnable" ), 			LFUNCVAL( rtl8370_qos_1pRemarkEnable )},
+	{ LSTRKEY( "qos_1pRemark" ), 				LFUNCVAL( rtl8370_qos_1pRemark )},
+	{ LSTRKEY( "qos_dscpRemarkEnable" ), 		LFUNCVAL( rtl8370_qos_dscpRemarkEnable )},
+	{ LSTRKEY( "qos_dscpRemark" ), 				LFUNCVAL( rtl8370_qos_dscpRemark )},
+	
 		
 	
 	// Return numbers
@@ -1629,7 +2140,12 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_QUEUE_ID" ), 			LNUMVAL( RT_ERR_QUEUE_ID ) },
 	{ LSTRKEY( "RT_ERR_NULL_POINTER" ), 		LNUMVAL( RT_ERR_NULL_POINTER ) },
 	{ LSTRKEY( "RT_ERR_SFC_UNKNOWN_GROUP" ), 	LNUMVAL( RT_ERR_SFC_UNKNOWN_GROUP ) },
-	
+	{ LSTRKEY( "RT_ERR_QUEUE_NUM" ), 			LNUMVAL( RT_ERR_QUEUE_NUM ) },
+	{ LSTRKEY( "RT_ERR_QOS_SEL_PRI_SOURCE" ), 	LNUMVAL( RT_ERR_QOS_SEL_PRI_SOURCE ) },
+	{ LSTRKEY( "RT_ERR_QOS_INT_PRIORITY" ), 	LNUMVAL( RT_ERR_QOS_INT_PRIORITY ) },
+	{ LSTRKEY( "RT_ERR_QOS_DSCP_VALUE" ), 		LNUMVAL( RT_ERR_QOS_DSCP_VALUE ) },
+	{ LSTRKEY( "RT_ERR_QOS_SEL_PORT_PRI" ), 	LNUMVAL( RT_ERR_QOS_SEL_PORT_PRI ) },
+	{ LSTRKEY( "RT_ERR_QOS_QUEUE_WEIGHT" ), 	LNUMVAL( RT_ERR_QOS_QUEUE_WEIGHT ) },
 
 	
 	
