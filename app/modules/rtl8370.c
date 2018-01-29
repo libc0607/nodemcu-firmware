@@ -7,6 +7,7 @@
 #include "rtk_api_ext.h"
 #include "smi.h"
 
+
 #include "rtl8370_asicdrv_acl.h"
 #include "rtl8370_asicdrv.h"
 #include "rtl8370_asicdrv_dot1x.h"
@@ -32,6 +33,60 @@
 #include "rtl8370_asicdrv_mirror.h"
 #include "rtl8370_asicdrv_mib.h"
 #include "rtl8370_asicdrv_interrupt.h"
+
+
+// ================== 抄来的 Tools =======================
+
+// Function:
+// 		void rtl8370_tools_strmac_to_byte(char * str, uint8 * mac)
+// Input: 
+//		str = "00:11:22:33:44:55";
+// Output: 
+//		mac[6] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55};
+void rtl8370_tools_strmac_to_byte(char * str, uint8 * mac) 
+{
+	uint8 *p;
+	int32 count = 0;
+	p = strtok(str, ":");
+	if (p != NULL) {
+		mac[count++] = strtoul(p,0,16);
+		while(1) {
+			p = strtok(NULL, ":");
+			if (p == NULL) {
+				break;
+			}
+			else {
+				mac[count++] = strtoul(p,0,16);
+			}
+		}
+	}
+}
+
+// Function:
+// 		void rtl8370_tools_strip_to_byte(char * str, uint8 * ip)
+// Input: 
+//		str = "192.168.0.1";
+// Output: 
+//		ip[4] = {0xC0, 0xa8, 0x00, 0x01};
+void rtl8370_tools_strip_to_byte(char * str, uint8 * ip) 
+{
+	uint8 *p;
+	int32 count = 0;
+	p = strtok(str, ".");
+	if (p != NULL) {
+		ip[count++] = atol(p);
+		while(1) {
+			p = strtok(NULL, ".");
+			if (p == NULL) {
+				break;
+			}
+			else {
+				ip[count++] = atol(p);
+			}
+		}
+	}
+}
+
 
 
 // ============== esp8266 control functions ===========
@@ -2135,6 +2190,190 @@ static int rtl8370_int_advanceInfo(lua_State* L)
 
 
 
+//============== Trap & Reserved Multicast Address =============
+
+// Lua: status[, ucast_action]= rtl8370.trap_unknownUnicastPktAction(type[, ucast_action])
+static int rtl8370_trap_unknownUnicastPktAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_trap_ucast_type_t type;
+	rtk_trap_ucast_action_t ucast_action;
+
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trap_unknownUnicastPktAction_get(type, &ucast_action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, ucast_action);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		ucast_action = luaL_checkinteger(L, 2);
+		
+		ret = rtk_trap_unknownUnicastPktAction_set(type, ucast_action);
+
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, mcast_action]= rtl8370.trap_unknownMcastPktAction(port, type[, mcast_action])
+static int rtl8370_trap_unknownMcastPktAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_mcast_type_t type;
+	rtk_trap_mcast_action_t mcast_action;
+
+	if (argc == 2) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		type = luaL_checkinteger(L, 2);
+		
+		ret = rtk_trap_unknownMcastPktAction_get(port, type, &mcast_action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, mcast_action);
+		return 2;
+	}
+	else if (argc == 3) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		type = luaL_checkinteger(L, 2);
+		mcast_action = luaL_checkinteger(L, 3);
+		
+		ret = rtk_trap_unknownMcastPktAction_set(port, type, mcast_action);
+
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, igmp_action]= rtl8370.trap_igmpCtrlPktAction(type[, igmp_action])
+static int rtl8370_trap_igmpCtrlPktAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_igmp_type_t type;
+	rtk_trap_igmp_action_t igmp_action;
+
+	if (argc == 1) {
+		// get
+		type = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trap_igmpCtrlPktAction_get(type, &igmp_action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, igmp_action);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		type = luaL_checkinteger(L, 1);
+		igmp_action = luaL_checkinteger(L, 2);
+		
+		ret = rtk_trap_igmpCtrlPktAction_set(type, igmp_action);
+
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, rma_action]= rtl8370.trap_rmaAction(rma_frame[, rma_action])
+static int rtl8370_trap_rmaAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_mac_t rma_frame;
+	rtk_trap_rma_action_t rma_action;
+	rtk_mac_t * pRma_frame = &rma_frame;
+	uint32 length;
+	const char * rma_frame_char;
+	char * rma_frame_char_buf;			// ......
+	
+	rma_frame_char = lua_tolstring(L, 1, &length);		// it's a const pointer
+	os_memcpy(rma_frame_char_buf, rma_frame_char, length);
+	rma_frame_char_buf[length] = '\0';
+	rtl8370_tools_strmac_to_byte(rma_frame_char_buf, pRma_frame->octet);
+	
+	if (argc == 1) {
+		// get
+		ret = rtk_trap_rmaAction_get(&rma_frame, &rma_action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, rma_action);
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		rma_action = luaL_checkinteger(L, 2);
+		ret = rtk_trap_rmaAction_set(&rma_frame, rma_action);
+
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable]= rtl8370.trap_ethernetAv([enable])
+static int rtl8370_trap_ethernetAv(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trap_ethernetAv_get(&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_trap_ethernetAv_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
 
 // Module function map
 static const LUA_REG_TYPE rtl8370_map[] = {
@@ -2250,6 +2489,16 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "int_advanceInfo" ), 			LFUNCVAL( rtl8370_int_advanceInfo )},
 
 	
+	// Trap & Reserved Multicast Address
+	{ LSTRKEY( "trap_unknownUnicastPktAction" ),LFUNCVAL( rtl8370_trap_unknownUnicastPktAction )},
+	{ LSTRKEY( "trap_unknownMcastPktAction" ), 	LFUNCVAL( rtl8370_trap_unknownMcastPktAction )},
+	{ LSTRKEY( "trap_igmpCtrlPktAction" ), 		LFUNCVAL( rtl8370_trap_igmpCtrlPktAction )},
+	{ LSTRKEY( "trap_rmaAction" ), 				LFUNCVAL( rtl8370_trap_rmaAction )},
+	{ LSTRKEY( "trap_ethernetAv" ), 			LFUNCVAL( rtl8370_trap_ethernetAv )},
+		
+		
+		
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -2280,6 +2529,8 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_QOS_DSCP_VALUE" ), 		LNUMVAL( RT_ERR_QOS_DSCP_VALUE ) },
 	{ LSTRKEY( "RT_ERR_QOS_SEL_PORT_PRI" ), 	LNUMVAL( RT_ERR_QOS_SEL_PORT_PRI ) },
 	{ LSTRKEY( "RT_ERR_QOS_QUEUE_WEIGHT" ), 	LNUMVAL( RT_ERR_QOS_QUEUE_WEIGHT ) },
+	{ LSTRKEY( "RT_ERR_NOT_ALLOWED"),			LNUMVAL( RT_ERR_NOT_ALLOWED ) },
+	
 
 	
 	
