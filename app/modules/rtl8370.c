@@ -2299,7 +2299,7 @@ static int rtl8370_trap_igmpCtrlPktAction(lua_State* L)
 	}
 }
 
-// Lua: status[, rma_action]= rtl8370.trap_rmaAction(rma_frame[, rma_action])
+// Lua: status[, rma_action]= rtl8370.trap_rmaAction(mac[, rma_action])
 static int rtl8370_trap_rmaAction(lua_State* L)
 {
 	uint32_t argc = lua_gettop(L);
@@ -2373,6 +2373,555 @@ static int rtl8370_trap_ethernetAv(lua_State* L)
 
 
 
+//=================== ACL ============================
+
+// Lua: status = rtl8370.acl_init()
+static int rtl8370_acl_init(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	
+	ret = rtk_filter_igrAcl_init();
+	
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, pCfg] = rtl8370.acl_createCfg(activePort, activePortMask, invert)
+// return a pointer of config (lightuserdata in Lua)
+static int rtl8370_acl_createCfg(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	rtk_filter_cfg_t * pCfg;
+	
+	pCfg = (rtk_filter_cfg_t *)os_malloc(sizeof(rtk_filter_cfg_t));
+	
+	if (NULL == pCfg) {
+		ret = RT_ERR_INPUT;			// todo
+		lua_pushnumber(L, ret);
+		return 1;
+	}	
+	
+
+	pCfg->activeport.dataType = FILTER_FIELD_DATA_MASK;		// default
+	pCfg->activeport.value = luaL_checkinteger(L, 1);
+	pCfg->activeport.mask = luaL_checkinteger(L, 2);
+	pCfg->invert = luaL_checkinteger(L, 3);
+	
+	ret = RT_ERR_OK;
+	lua_pushnumber(L, ret);
+	lua_pushlightuserdata(L, (void *)pCfg);
+	return 2;
+
+		
+}
+
+// Lua: status = rtl8370.acl_freeCfg(pCfg)
+static int rtl8370_acl_freeCfg(lua_State* L)
+{
+	rtk_api_ret_t ret = RT_ERR_OK;
+	rtk_filter_cfg_t * pCfg;
+	
+	pCfg = (rtk_filter_cfg_t *)luaL_checkinteger(L, 1);
+	
+	if (NULL == pCfg) {
+		ret = RT_ERR_INPUT;	
+	}	
+	
+	rtk_filter_field_t * pFieldTemp;
+	while (NULL != pCfg->fieldHead) {
+		pFieldTemp = pCfg->fieldHead->next;
+		os_free(pCfg->fieldHead);
+		pCfg->fieldHead = pFieldTemp;
+	}
+	
+	os_free(pCfg);
+	pCfg = NULL;
+	
+	lua_pushnumber(L, ret);
+	return 1;	
+}
+
+// Lua: status = rtl8370.acl_freeAction(Action)
+static int rtl8370_acl_freeAction(lua_State* L)
+{
+	rtk_api_ret_t ret = RT_ERR_OK;
+	rtk_filter_action_t * pAction;
+	
+	pAction = (rtk_filter_action_t *)luaL_checkinteger(L, 1);
+	
+	if (NULL == pAction) {
+		ret = RT_ERR_INPUT;	
+	}	
+	
+	os_free(pAction);
+	pAction = NULL;
+	
+	lua_pushnumber(L, ret);
+	return 1;	
+}
+
+// Lua: status, pAction = rtl8370.acl_createAction()
+// return a pointer of action (lightuserdata in Lua)
+static int rtl8370_acl_createAction(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	rtk_filter_action_t * pAction;
+	
+	pAction = (rtk_filter_action_t *)os_malloc(sizeof(rtk_filter_action_t));
+	
+	if (NULL == pAction) {
+		ret = RT_ERR_INPUT;			// todo
+		lua_pushnumber(L, ret);
+		return 1;
+	}	
+	os_memset(pAction, 0, sizeof(rtk_filter_action_t));
+	ret = RT_ERR_OK;
+	lua_pushnumber(L, ret);
+	lua_pushlightuserdata(L, (void *)pAction);
+	return 2;	
+}
+
+// Lua: status = rtl8370.acl_addAction(pAction, act[, args ...])
+/*
+	status = rtl8370.acl_addAction(pAction, "cIndex", cidx)
+	status = rtl8370.acl_addAction(pAction, "cVid", cidx, cvid)
+	status = rtl8370.acl_addAction(pAction, "sIndex", sidx)
+	--status = rtl8370.acl_addAction(pAction, "policing", idx)	-- ?
+	status = rtl8370.acl_addAction(pAction, "trap")
+	status = rtl8370.acl_addAction(pAction, "copy")
+	status = rtl8370.acl_addAction(pAction, "redirect", portmask)
+	status = rtl8370.acl_addAction(pAction, "drop")
+	status = rtl8370.acl_addAction(pAction, "mirror")
+	status = rtl8370.acl_addAction(pAction, "dstPort", portmask)
+	status = rtl8370.acl_addAction(pAction, "priority", priority)	-- 0~7, dot1p priority
+	status = rtl8370.acl_addAction(pAction, "sVid", svid)
+*/
+CONST_T static char * rtl8370_acl_action_type_char[] = {
+	"cIndex", "cVid", "sIndex", "policing", "trap", 	// 5
+	"copy", "redirect", "drop", "mirror", "dstPort", 		// 10
+	"priority", "sVid", NULL
+};
+static int rtl8370_acl_addAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_filter_action_t * pAction;
+	
+	const char * buf_char;
+	size_t buf_char_length;
+	
+	// init pAction
+	pAction = (rtk_filter_action_t *) luaL_checkinteger(L, 1);
+	
+	// switch action type
+	rtk_filter_act_enable_t i = 0;
+	buf_char = lua_tolstring(L, 2, &buf_char_length);
+
+	while (rtl8370_acl_action_type_char[i] != NULL) {
+		if (0 == strcmp(rtl8370_acl_action_type_char[i], buf_char)) 
+			break;	
+		i++;
+	}
+	
+	// rtl8370_acl_action_type_char[i] is type in rtk_filter_act_enable_t
+	// get args
+	pAction->actEnable[i] = TRUE;
+	switch(i) {
+		case FILTER_ENACT_INGRESS_CVLAN_INDEX:		 	
+			pAction->filterIngressCvlanIdx = luaL_checkinteger(L, 3);
+		break;
+		case FILTER_ENACT_INGRESS_CVLAN_VID:	
+			pAction->filterIngressCvlanVid = luaL_checkinteger(L, 3);		
+			pAction->filterIngressCvlanIdx = luaL_checkinteger(L, 4);
+		break;
+		case FILTER_ENACT_EGRESS_SVLAN_INDEX:		
+			pAction->filterIngressCvlanIdx = luaL_checkinteger(L, 3);
+		break;
+		case FILTER_ENACT_POLICING_0:		
+			// To-do: How to use it?
+		break;
+		case FILTER_ENACT_REDIRECT:		
+			pAction->filterRedirectPortmask = luaL_checkinteger(L, 3);
+		break;
+		case FILTER_ENACT_ADD_DSTPORT:		
+			pAction->filterAddDstPortmask = luaL_checkinteger(L, 3);
+		break;
+		case FILTER_ENACT_PRIORITY:	
+			pAction->filterPriority = luaL_checkinteger(L, 3);
+		break;
+		case FILTER_ENACT_EGRESS_SVLAN_VID:	
+			pAction->filterEgressSvlanVid = luaL_checkinteger(L, 3);
+		break;
+		
+		// No arg
+		case FILTER_ENACT_TRAP_CPU:		
+		case FILTER_ENACT_COPY_CPU:		
+		case FILTER_ENACT_DROP:		
+		case FILTER_ENACT_MIRROR:		
+		
+		break;
+		
+		// Wrong args
+		default:
+			ret = RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT;
+			lua_pushnumber(L, ret);
+			return 1;
+		break;	
+	}
+	
+	lua_pushnumber(L, ret);
+	return 1;	
+}
+
+// Lua: status= rtl8370.acl_addField2Cfg(pCfg, fieldType[, options ...])
+/*
+	I'll try these at first
+	l2: dmac, smac
+	l3: sip, dip
+	l4: tcpsport, tcpdport
+	
+	Maybe later：
+	l2: stag (SVLAN tag), etype (EtherType), ctag (CVLAN tag)
+	l3: tos, flag, protocol, offset (?), 
+	    sip6 (IPv6 Source Address), dip6 (IPv6 Destination Address), 
+		6tclass (IPv6 Traffic Class), 6nheader (IPv6 Next Header)
+	l4: tcpflag, udpsport, udpdport, icmpcode, icmptype, igmptype
+	
+	
+	Lua: 
+	-- L2:
+	--							 config		mac					maskbit from start, 1~48
+	status = rtl8370.acl_addField2Cfg(cfg, "dmac", "00:90:f5:23:73:85"[, 48])
+	status = rtl8370.acl_addField2Cfg(cfg, "smac", "00:90:f5:23:73:86"[, 48])
+	--------						
+	status = rtl8370.acl_addField2Cfg(cfg, "stag", pri, cfi, vid)
+	status = rtl8370.acl_addField2Cfg(cfg, "ctag", pri, cfi, vid)
+	status = rtl8370.acl_addField2Cfg(cfg, "etype", "0800")			-- IPv4 Packet 
+	
+	-- L3:
+	--							 config		ip address		maskbit from start, 1~32
+	status = rtl8370.acl_addField2Cfg(cfg, "sip", "192.168.0.111"[, 32])
+	status = rtl8370.acl_addField2Cfg(cfg, "dip", "192.168.0.112"[, 32])
+	--------
+	status = rtl8370.acl_addField2Cfg(cfg, "tos", tos)
+	status = rtl8370.acl_addField2Cfg(cfg, "flag", flag)
+	status = rtl8370.acl_addField2Cfg(cfg, "protocol", protocol)
+	status = rtl8370.acl_addField2Cfg(cfg, "offset", offset)
+	status = rtl8370.acl_addField2Cfg(cfg, "sip6", "2001:250:3000:3ca0::55"[, 128])
+	status = rtl8370.acl_addField2Cfg(cfg, "dip6", "2001:250:3000:3ca0::55"[, 128])
+	status = rtl8370.acl_addField2Cfg(cfg, "6tclass", class)
+	status = rtl8370.acl_addField2Cfg(cfg, "6nheader", nheader)
+	
+	-- L4:
+	status = rtl8370.acl_addField2Cfg(cfg, "tcpsport", 443[, 0xffff])	-- port, mask
+	status = rtl8370.acl_addField2Cfg(cfg, "tcpdport", 22[, 0xfff0])
+	--------
+	status = rtl8370.acl_addField2Cfg(cfg, "tcpflag", tcpflag)
+	status = rtl8370.acl_addField2Cfg(cfg, "udpsport", udpsport)
+	status = rtl8370.acl_addField2Cfg(cfg, "udpdport", udpdport)
+	status = rtl8370.acl_addField2Cfg(cfg, "icmpcode", icmpcode)
+	status = rtl8370.acl_addField2Cfg(cfg, "icmptype", icmptype)
+	status = rtl8370.acl_addField2Cfg(cfg, "igmptype", igmptype)
+	
+	
+*/
+CONST_T static char * rtl8370_acl_field_type_char[] = {
+	"dmac", "smac", "etype", "stag", "ctag", //4
+	"sip", "dip", "tos", "protocol", "flag", "offset",//10
+	"sip6", "dip6", "6tclass", "6nheader",	//14
+	"tcpsport", "tcpdport", "tcpflag", "udpsport", "udpdport",//19
+	"icmpcode", "icmptype", "igmptype", NULL
+};
+static int rtl8370_acl_addField2Cfg(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_filter_cfg_t * pCfg;
+	rtk_filter_field_t * newField;
+	const char * field_type_char;
+	size_t field_type_char_length;
+	size_t length;	
+	const char * mac_char;
+	char * mac_char_buf;			// ......
+	
+	// init cfg and field
+	pCfg = (rtk_filter_cfg_t *) luaL_checkinteger(L, 1);
+	newField = (rtk_filter_field_t *)os_malloc(sizeof(rtk_filter_field_t));
+	
+	// switch field type
+	rtk_filter_field_type_t i = 0;
+	field_type_char = lua_tolstring(L, 2, &field_type_char_length);
+
+	while (rtl8370_acl_field_type_char[i] != NULL) {
+		if (0 == strcmp(rtl8370_acl_field_type_char[i], field_type_char)) 
+			break;	
+		i++;
+	}
+	
+	// rtl8370_acl_field_type_char[i] is type
+	newField->fieldType = i;
+	switch(i) {
+		case FILTER_FIELD_DMAC:		// smac and dmac are same rtk_mac_t 				
+		case FILTER_FIELD_SMAC:		
+			newField->filter_pattern_union.smac.dataType = FILTER_FIELD_DATA_MASK;
+			mac_char = lua_tolstring(L, 3, &length);		
+			os_memcpy(mac_char_buf, mac_char, length);
+			mac_char_buf[length] = '\0';
+			rtl8370_tools_strmac_to_byte(mac_char_buf, newField->filter_pattern_union.smac.value.octet);
+			if (argc == 4) {
+				// specified mask
+				int mask_bits = luaL_checkinteger(L, 4);
+				os_memset(newField->filter_pattern_union.smac.mask.octet, 0, ETHER_ADDR_LEN);
+				for (int j=0; j<mask_bits; j++) {
+					*((newField->filter_pattern_union.smac.mask.octet)+(j/8)) &= (1<<(7-(j%8)));
+				}
+			} else {
+				// default mask all
+				os_memset(newField->filter_pattern_union.smac.mask.octet, 0xff, ETHER_ADDR_LEN);
+			}	
+		break;
+		case FILTER_FIELD_IPV4_SIP:		// sip and dip are same rtk_filter_ip_t
+		case FILTER_FIELD_IPV4_DIP:		
+			newField->filter_pattern_union.dip.dataType = FILTER_FIELD_DATA_MASK;
+			mac_char = lua_tolstring(L, 3, &length);		
+			os_memcpy(mac_char_buf, mac_char, length);
+			mac_char_buf[length] = '\0';
+			rtl8370_tools_strip_to_byte(mac_char_buf, (uint8 *)(&(newField->filter_pattern_union.dip.value)));
+			if (argc == 4) {
+				// specified mask
+				int mask_bits = luaL_checkinteger(L, 4);
+				os_memset(&(newField->filter_pattern_union.dip.mask), 0, 4);		// clear
+				for (int j=0; j<mask_bits; j++) {
+					*((uint8 *)((&(newField->filter_pattern_union.dip.mask))+(j/8))) &= (1<<(7-(j%8)));
+				}
+			} else {
+				// default mask all
+				os_memset(&(newField->filter_pattern_union.dip.mask), 0xff, 4);
+			}
+		break;
+		case FILTER_FIELD_TCP_SPORT:	
+		case FILTER_FIELD_TCP_DPORT:	
+			newField->filter_pattern_union.tcpSrcPort.dataType = FILTER_FIELD_DATA_MASK;
+			newField->filter_pattern_union.tcpSrcPort.value = luaL_checkinteger(L, 3);	
+			if (argc == 4) {
+				// specified mask
+				newField->filter_pattern_union.tcpSrcPort.mask = luaL_checkinteger(L, 4);
+			} else {
+				// default mask all
+				newField->filter_pattern_union.tcpSrcPort.mask = 0xffff;
+			}
+		break;		
+		default:
+			// 因为懒还没写的23333
+			ret = RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT;
+			lua_pushnumber(L, ret);
+			return 1;
+		break;	
+	}
+	
+	// ready to link newField to cfg
+	ret = rtk_filter_igrAcl_field_add(pCfg, newField);
+	lua_pushnumber(L, ret);
+	return 1;	
+}
+
+// Lua: status, ruleNum = rtl8370.acl_cfg("add", filter_id, cfg, action)
+/* 
+	status, ruleNum = rtl8370.acl_cfg("add", filter_id, cfg, action)
+	status = rtl8370.acl_cfg("del", filter_id)
+	status = rtl8370.acl_cfg("delall")
+	-- status, cfg, action = rtl8370.acl_cfg("get", filter_id)	-- 可能没啥用
+	--status = rtl8370.acl_cfg("set", filter_id, template_index, cfg, action)
+*/
+CONST_T static char * rtl8370_acl_cfg_char[6] = {
+	"add", "del", "delall", "get", "set", NULL
+};
+static int rtl8370_acl_cfg(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	const char * buf_char;
+	size_t buf_char_length;
+	int i;
+	buf_char = lua_tolstring(L, 1, &buf_char_length);
+	
+	rtk_api_ret_t ret = RT_ERR_OK;
+	rtk_filter_id_t filter_id;
+	rtk_filter_cfg_t * pCfg;
+	rtk_filter_action_t * pAction;
+	rtk_filter_number_t ruleNum;
+	
+	
+	while (rtl8370_acl_cfg_char[i] != NULL) {
+		if (0 == strcmp(rtl8370_acl_cfg_char[i], buf_char)) 
+			break;	
+		i++;
+	}
+	
+	switch(i) {
+		case 0:	// add		 		
+			filter_id = luaL_checkinteger(L, 2); 
+			pCfg = (rtk_filter_cfg_t *)luaL_checkinteger(L, 3);
+			pAction = (rtk_filter_action_t *)luaL_checkinteger(L, 4);
+			ret = rtk_filter_igrAcl_cfg_add(filter_id, pCfg, pAction, &ruleNum);
+			lua_pushnumber(L, ret);
+			lua_pushnumber(L, ruleNum);
+			return 2;
+		break;	
+		case 1:	// del
+			filter_id = luaL_checkinteger(L, 2); 
+			ret = rtk_filter_igrAcl_cfg_del(filter_id);
+			lua_pushnumber(L, ret);
+			return 1;
+		break;
+		case 2:	// delall	
+			ret = rtk_filter_igrAcl_cfg_delAll();
+			lua_pushnumber(L, ret);
+			return 1;
+		break;
+		case 3:	// get	
+		case 4:	// set	
+			// PASS
+			lua_pushnumber(L, ret);
+			return 1;
+		break;
+		// Wrong args
+		default:
+			ret = RT_ERR_INPUT;
+			lua_pushnumber(L, ret);
+			return 1;
+		break;	
+	}
+	
+	lua_pushnumber(L, ret);
+	return 1;	
+}
+
+// Lua: status = rtl8370.acl_unmatchAction(port, action)
+/* 
+	status = rtl8370.acl_unmatchAction(port, action)
+	status, action = rtl8370.acl_unmatchAction(port)
+*/
+static int rtl8370_acl_unmatchAction(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_filter_unmatch_action_t action;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_filter_igrAcl_unmatchAction_get(port, &action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, action);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		action = luaL_checkinteger(L, 2);
+		
+		ret = rtk_filter_igrAcl_unmatchAction_set(port, action);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status = rtl8370.acl_state(port, state)
+/* 
+	status = rtl8370.acl_state(port, state)
+	status, state = rtl8370.acl_state(port)
+*/
+static int rtl8370_acl_state(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_filter_state_t state;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_filter_igrAcl_state_get(port, &state);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, state);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		state = luaL_checkinteger(L, 2);
+		
+		ret = rtk_filter_igrAcl_state_set(port, state);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status = rtl8370.acl_template(index, template_table)
+/* 
+	status = rtl8370.acl_template(index, template_table)
+	status, template_table = rtl8370.acl_template(index)
+	index: 0~4
+	template_table[7]: {0,1,2,3,4,5,6}	
+*/
+static int rtl8370_acl_template(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	uint32 index;
+	rtk_filter_template_t aclTemplate;
+	aclTemplate.index = luaL_checkinteger(L, 1);
+	
+	if (argc == 1) {
+		// get
+
+		ret = rtk_filter_igrAcl_template_get(&aclTemplate);
+		lua_pushnumber(L, ret);
+		
+		lua_newtable(L); 
+		for (int i=0; i<RTK_MAX_NUM_OF_FILTER_FIELD; i++) {
+			lua_pushnumber(L, i+1);					// key
+			lua_pushnumber(L, aclTemplate.fieldType[i]);// value
+			lua_settable(L, -3);
+		} 
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		for (int i=0; i<RTK_MAX_NUM_OF_FILTER_FIELD; i++) {
+			lua_pushnumber(L, i+1);		// push key
+			lua_gettable(L, -2);		// get value at -1 from table at -2
+			aclTemplate.fieldType[i] = luaL_checkinteger(L, -1);
+			lua_pop(L, 1);
+		}
+		
+		ret = rtk_filter_igrAcl_template_set(&aclTemplate);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
 
 
 // Module function map
@@ -2497,6 +3046,19 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "trap_ethernetAv" ), 			LFUNCVAL( rtl8370_trap_ethernetAv )},
 		
 		
+	// ACL
+	{ LSTRKEY( "acl_init" ), 					LFUNCVAL( rtl8370_acl_init )},
+	{ LSTRKEY( "acl_createCfg" ), 				LFUNCVAL( rtl8370_acl_createCfg )},
+	{ LSTRKEY( "acl_createAction" ), 			LFUNCVAL( rtl8370_acl_createAction )},
+	{ LSTRKEY( "acl_freeCfg" ), 				LFUNCVAL( rtl8370_acl_freeCfg )},
+	{ LSTRKEY( "acl_freeAction" ), 				LFUNCVAL( rtl8370_acl_freeAction )},
+	{ LSTRKEY( "acl_addAction" ), 				LFUNCVAL( rtl8370_acl_addAction )},
+	{ LSTRKEY( "acl_addField2Cfg" ), 			LFUNCVAL( rtl8370_acl_addField2Cfg )},
+	{ LSTRKEY( "acl_cfg" ), 					LFUNCVAL( rtl8370_acl_cfg )},
+	{ LSTRKEY( "acl_unmatchAction" ), 			LFUNCVAL( rtl8370_acl_unmatchAction )},
+	{ LSTRKEY( "acl_state" ), 					LFUNCVAL( rtl8370_acl_state )},
+	{ LSTRKEY( "acl_template" ), 				LFUNCVAL( rtl8370_acl_template )},
+	
 		
 	
 	
@@ -2530,6 +3092,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_QOS_SEL_PORT_PRI" ), 	LNUMVAL( RT_ERR_QOS_SEL_PORT_PRI ) },
 	{ LSTRKEY( "RT_ERR_QOS_QUEUE_WEIGHT" ), 	LNUMVAL( RT_ERR_QOS_QUEUE_WEIGHT ) },
 	{ LSTRKEY( "RT_ERR_NOT_ALLOWED"),			LNUMVAL( RT_ERR_NOT_ALLOWED ) },
+	{ LSTRKEY( "RT_ERR_ENTRY_INDEX"),			LNUMVAL( RT_ERR_ENTRY_INDEX ) },
+	{ LSTRKEY( "RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT"),	LNUMVAL( RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT ) },
+	{ LSTRKEY( "RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT"),	LNUMVAL( RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT ) },
+	{ LSTRKEY( "RT_ERR_FILTER_ENTRYIDX"),		LNUMVAL( RT_ERR_FILTER_ENTRYIDX ) },
 	
 
 	
