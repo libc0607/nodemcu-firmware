@@ -2924,6 +2924,343 @@ static int rtl8370_acl_template(lua_State* L)
 }
 
 
+
+//=================== PHY settings ============================
+// Note: It seems that the functions including rtk_port_mac*() and rtk_port_rgmii*() 
+// are useless on a simple switch. I'll do it later.
+
+// Lua: status[, speed]= rtl8370.port_phyAutoNegoAbility(port[, speed])
+static int rtl8370_port_phyAutoNegoAbility(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_port_phy_ability_t ability;
+	uint32 speed;
+		
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_phyAutoNegoAbility_get(port, &ability);
+		
+		lua_pushnumber(L, ret);
+		
+		// to-do: optimize
+		if (ability.Full_1000 == ENABLED) {
+			speed = 1000;
+		} else if (ability.Half_10 == ENABLED) {
+			speed = 5;
+		} else if (ability.Full_10 == ENABLED) {
+			speed = 10;
+		} else if (ability.Half_100 == ENABLED) {
+			speed = 50;
+		} else if (ability.Full_100 == ENABLED) {
+			speed = 100;
+		} else {
+			speed = 0;	// unknown
+		}
+		
+		lua_pushnumber(L, speed);
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		speed = luaL_checkinteger(L, 2);
+		
+		// to-do: optimize
+		if (speed == 1000) {
+			ability.Full_1000 = ENABLED;
+		} else if (speed == 5) {
+			ability.Half_10 = ENABLED;
+		} else if (speed == 10) {
+			ability.Full_10 = ENABLED;
+		} else if (speed == 50) {
+			ability.Half_100 = ENABLED;
+		} else if (speed == 100) {
+			ability.Full_100 = ENABLED;
+		}
+		
+		ret = rtk_port_phyAutoNegoAbility_set(port, &ability);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, speed]= rtl8370.port_phyForceModeAbility(port[, speed])
+static int rtl8370_port_phyForceModeAbility(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_port_phy_ability_t ability;
+	uint32 speed;
+		
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_phyForceModeAbility_get(port, &ability);
+		
+		lua_pushnumber(L, ret);
+		
+		// to-do: optimize
+		if (ability.Full_1000 == ENABLED) {
+			speed = 1000;
+		} else if (ability.Half_10 == ENABLED) {
+			speed = 5;
+		} else if (ability.Full_10 == ENABLED) {
+			speed = 10;
+		} else if (ability.Half_100 == ENABLED) {
+			speed = 50;
+		} else if (ability.Full_100 == ENABLED) {
+			speed = 100;
+		} else {
+			speed = 0;	// unknown
+		}
+		
+		lua_pushnumber(L, speed);
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		speed = luaL_checkinteger(L, 2);
+		
+		// to-do: optimize
+		if (speed == 1000) {
+			ability.Full_1000 = ENABLED;
+		} else if (speed == 5) {
+			ability.Half_10 = ENABLED;
+		} else if (speed == 10) {
+			ability.Full_10 = ENABLED;
+		} else if (speed == 50) {
+			ability.Half_100 = ENABLED;
+		} else if (speed == 100) {
+			ability.Full_100 = ENABLED;
+		}
+		
+		ret = rtk_port_phyForceModeAbility_set(port, &ability);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status, linkStatus, speed, duplex = rtl8370.port_phyStatus(port)
+static int rtl8370_port_phyStatus(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_port_linkStatus_t linkStatus;
+	rtk_data_t speed;
+	rtk_data_t duplex;
+		
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_phyStatus_get(port, &linkStatus, &speed, &duplex);
+		
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, linkStatus);
+		lua_pushnumber(L, speed);
+		lua_pushnumber(L, duplex);
+		
+		return 4;
+	}
+
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.port_backpressureEnable(port[, enable])
+static int rtl8370_port_backpressureEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_backpressureEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_port_backpressureEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.port_adminEnable(port[, enable])
+static int rtl8370_port_adminEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_adminEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_port_adminEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, portmask] = rtl8370.port_isolation(port[, portmask])
+static int rtl8370_port_isolation(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_portmask_t portmask;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_isolation_get(port, &portmask);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, portmask.bits[0]);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		portmask.bits[0] = luaL_checkinteger(L, 2);
+		
+		ret = rtk_port_isolation_set(port, portmask);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.port_phyEnableAll([enable])
+static int rtl8370_port_phyEnableAll(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_port_phyEnableAll_get(&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_phyEnableAll_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, efid] = rtl8370.port_efid(port[, efid])
+static int rtl8370_port_efid(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_data_t efid;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_port_efid_get(port, &efid);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, efid);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		efid = luaL_checkinteger(L, 2);
+		
+		ret = rtk_port_efid_set(port, efid);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+
+
 // Module function map
 static const LUA_REG_TYPE rtl8370_map[] = {
 	
@@ -3059,8 +3396,18 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "acl_state" ), 					LFUNCVAL( rtl8370_acl_state )},
 	{ LSTRKEY( "acl_template" ), 				LFUNCVAL( rtl8370_acl_template )},
 	
-		
 	
+	// Port & PHY
+	{ LSTRKEY( "port_phyAutoNegoAbility" ), 	LFUNCVAL( rtl8370_port_phyAutoNegoAbility )},
+	{ LSTRKEY( "port_phyForceModeAbility" ), 	LFUNCVAL( rtl8370_port_phyForceModeAbility )},
+	{ LSTRKEY( "port_phyStatus" ), 				LFUNCVAL( rtl8370_port_phyStatus )},
+	{ LSTRKEY( "port_backpressureEnable" ), 	LFUNCVAL( rtl8370_port_backpressureEnable )},
+	{ LSTRKEY( "port_adminEnable" ), 			LFUNCVAL( rtl8370_port_adminEnable )},
+	{ LSTRKEY( "port_isolation" ), 				LFUNCVAL( rtl8370_port_isolation )},
+	{ LSTRKEY( "port_phyEnableAll" ), 			LFUNCVAL( rtl8370_port_phyEnableAll )},
+	{ LSTRKEY( "port_efid" ), 					LFUNCVAL( rtl8370_port_efid )},
+
+		
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -3096,7 +3443,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT"),	LNUMVAL( RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT ) },
 	{ LSTRKEY( "RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT"),	LNUMVAL( RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT ) },
 	{ LSTRKEY( "RT_ERR_FILTER_ENTRYIDX"),		LNUMVAL( RT_ERR_FILTER_ENTRYIDX ) },
-	
+	{ LSTRKEY( "RT_ERR_PHY_REG_ID"),			LNUMVAL( RT_ERR_PHY_REG_ID ) },
+	{ LSTRKEY( "RT_ERR_BUSYWAIT_TIMEOUT"),		LNUMVAL( RT_ERR_BUSYWAIT_TIMEOUT ) },
+	{ LSTRKEY( "RT_ERR_L2_FID"),				LNUMVAL( RT_ERR_L2_FID ) },
+
 
 	
 	
