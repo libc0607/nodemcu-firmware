@@ -6,6 +6,7 @@
 #include "user_interface.h"
 #include "rtk_api_ext.h"
 #include "smi.h"
+#include "rtl8370_config.h"
 
 
 #include "rtl8370_asicdrv_acl.h"
@@ -3271,12 +3272,14 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	
 	
 	// switch
+	#ifdef RTL8370LIB_USE_SWITCH
 	{ LSTRKEY( "switch_init" ), 				LFUNCVAL( rtl8370_switch_init )},
 	{ LSTRKEY( "switch_maxPktLen" ), 			LFUNCVAL( rtl8370_switch_maxPktLen )},
 	{ LSTRKEY( "switch_greenEthernet" ), 		LFUNCVAL( rtl8370_switch_greenEthernet )},
-	
+	#endif
 	
 	// led functions
+	#ifdef RTL8370LIB_USE_LED
 	{ LSTRKEY( "led_serialMode" ), 				LFUNCVAL ( rtl8370_led_serialMode ) },
 	{ LSTRKEY( "led_groupConfig" ), 			LFUNCVAL ( rtl8370_led_groupConfig ) },
 	{ LSTRKEY( "led_blinkRate" ), 				LFUNCVAL ( rtl8370_led_blinkRate ) },
@@ -3284,9 +3287,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "led_mode" ), 					LFUNCVAL ( rtl8370_led_mode ) },
 	{ LSTRKEY( "led_operation" ), 				LFUNCVAL ( rtl8370_led_operation ) },
 	{ LSTRKEY( "led_enable" ), 					LFUNCVAL ( rtl8370_led_enable ) },
-	
+	#endif
 	
 	// vlan functions
+	#ifdef RTL8370LIB_USE_CVLAN
 	{ LSTRKEY( "vlan_init" ), 					LFUNCVAL( rtl8370_vlan_init )},
 	{ LSTRKEY( "vlan" ), 						LFUNCVAL( rtl8370_vlan )},
 	{ LSTRKEY( "vlan_portPvid" ), 				LFUNCVAL( rtl8370_vlan_portPvid )},
@@ -3295,65 +3299,76 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "vlan_vlanBasedPriority" ), 		LFUNCVAL( rtl8370_vlan_vlanBasedPriority )},
 	{ LSTRKEY( "vlan_protoAndPortBasedVlan" ), 	LFUNCVAL( rtl8370_vlan_protoAndPortBasedVlan )},
 	{ LSTRKEY( "vlan_portFid" ), 				LFUNCVAL( rtl8370_vlan_portFid )},
-	
+	#endif
 	
 	// spanning tree
+	#ifdef RTL8370LIB_USE_SPANNING_TREE
 	{ LSTRKEY( "stp_init" ), 					LFUNCVAL( rtl8370_stp_init )},
 	{ LSTRKEY( "stp_mstpState" ), 				LFUNCVAL( rtl8370_stp_mstpState )},
-	
+	#endif
 	
 	// port mirroring
+	#ifdef RTL8370LIB_USE_MIRROR
 	{ LSTRKEY( "mirror_portBased" ), 			LFUNCVAL( rtl8370_mirror_portBased )},
 	{ LSTRKEY( "mirror_portIso" ), 				LFUNCVAL( rtl8370_mirror_portIso )},
-
+	#endif
 
 	// Port Trunk
+	#ifdef RTL8370LIB_USE_PORT_TRUNK
 	{ LSTRKEY( "trunk_port" ), 					LFUNCVAL( rtl8370_trunk_port )},
 	{ LSTRKEY( "trunk_distributionAlgorithm" ), LFUNCVAL( rtl8370_trunk_distributionAlgorithm )},
 	{ LSTRKEY( "trunk_queueEmptyStatus" ), 		LFUNCVAL( rtl8370_trunk_queueEmptyStatus )},
-	
+	#endif
 	
 	// Rate
+	#ifdef RTL8370LIB_USE_RATE
 	{ LSTRKEY( "rate_shareMeter" ), 			LFUNCVAL( rtl8370_rate_shareMeter )},
 	{ LSTRKEY( "rate_igrBandwidthCtrlRate" ), 	LFUNCVAL( rtl8370_rate_igrBandwidthCtrlRate )},
 	{ LSTRKEY( "rate_egrBandwidthCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrBandwidthCtrlRate )},
 	{ LSTRKEY( "rate_egrQueueBwCtrlEnable" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlEnable )},
 	{ LSTRKEY( "rate_egrQueueBwCtrlRate" ), 	LFUNCVAL( rtl8370_rate_egrQueueBwCtrlRate )},
-
+	#endif
 	
 	// EEE
+	#ifdef RTL8370LIB_USE_EEE
 	{ LSTRKEY( "eee_init" ), 					LFUNCVAL( rtl8370_eee_init )},
 	{ LSTRKEY( "eee_portEnable" ), 				LFUNCVAL( rtl8370_eee_portEnable )},
-
+	#endif
 
 	// ALDP
+	#ifdef RTL8370LIB_USE_ALDP
 	{ LSTRKEY( "aldp_init" ), 					LFUNCVAL( rtl8370_aldp_init )},
 	{ LSTRKEY( "aldp_enable" ), 				LFUNCVAL( rtl8370_aldp_enable )},
-
+	#endif
 	
 	// Storm
+	#ifdef RTL8370LIB_USE_STORM
 	{ LSTRKEY( "storm_controlRate" ), 			LFUNCVAL( rtl8370_storm_controlRate )},
 	{ LSTRKEY( "storm_bypass" ), 				LFUNCVAL( rtl8370_storm_bypass )},
-
+	#endif
 	
 	// Statistics
+	#ifdef RTL8370LIB_USE_STATISTICS
 	{ LSTRKEY( "stat_globalReset" ), 			LFUNCVAL( rtl8370_stat_globalReset )},
 	{ LSTRKEY( "stat_portReset" ), 				LFUNCVAL( rtl8370_stat_portReset )},
 	{ LSTRKEY( "stat_global" ), 				LFUNCVAL( rtl8370_stat_global )},
 	{ LSTRKEY( "stat_port" ), 					LFUNCVAL( rtl8370_stat_port )},
-
+	#endif
 	
 	// Leaky
+	#ifdef RTL8370LIB_USE_LEAKY
 	{ LSTRKEY( "leaky_vlan" ), 					LFUNCVAL( rtl8370_leaky_vlan )},
 	{ LSTRKEY( "leaky_portIsolation" ), 		LFUNCVAL( rtl8370_leaky_portIsolation )},
-	
+	#endif
 	
 	// CPU Port
+	#ifdef RTL8370LIB_USE_CPU_PORT
 	{ LSTRKEY( "cpu_enable" ), 					LFUNCVAL( rtl8370_cpu_enable )},
 	{ LSTRKEY( "cpu_tagPort" ), 				LFUNCVAL( rtl8370_cpu_tagPort )},
-	
+	#endif
 	
 	// QoS
+	#ifdef RTL8370LIB_USE_QOS
 	{ LSTRKEY( "qos_init" ), 					LFUNCVAL( rtl8370_qos_init )},
 	{ LSTRKEY( "qos_priSel" ), 					LFUNCVAL( rtl8370_qos_priSel )},
 	{ LSTRKEY( "qos_1pPriRemap" ), 				LFUNCVAL( rtl8370_qos_1pPriRemap )},
@@ -3366,24 +3381,27 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "qos_1pRemark" ), 				LFUNCVAL( rtl8370_qos_1pRemark )},
 	{ LSTRKEY( "qos_dscpRemarkEnable" ), 		LFUNCVAL( rtl8370_qos_dscpRemarkEnable )},
 	{ LSTRKEY( "qos_dscpRemark" ), 				LFUNCVAL( rtl8370_qos_dscpRemark )},
-	
+	#endif
 	
 	// Interrupt
+	#ifdef RTL8370LIB_USE_INTERRUPT
 	{ LSTRKEY( "int_polarity" ), 				LFUNCVAL( rtl8370_int_polarity )},
 	{ LSTRKEY( "int_control" ), 				LFUNCVAL( rtl8370_int_control )},
 	{ LSTRKEY( "int_status" ), 					LFUNCVAL( rtl8370_int_status )},
 	{ LSTRKEY( "int_advanceInfo" ), 			LFUNCVAL( rtl8370_int_advanceInfo )},
-
+	#endif
 	
 	// Trap & Reserved Multicast Address
+	#ifdef RTL8370LIB_USE_TRAP
 	{ LSTRKEY( "trap_unknownUnicastPktAction" ),LFUNCVAL( rtl8370_trap_unknownUnicastPktAction )},
 	{ LSTRKEY( "trap_unknownMcastPktAction" ), 	LFUNCVAL( rtl8370_trap_unknownMcastPktAction )},
 	{ LSTRKEY( "trap_igmpCtrlPktAction" ), 		LFUNCVAL( rtl8370_trap_igmpCtrlPktAction )},
 	{ LSTRKEY( "trap_rmaAction" ), 				LFUNCVAL( rtl8370_trap_rmaAction )},
 	{ LSTRKEY( "trap_ethernetAv" ), 			LFUNCVAL( rtl8370_trap_ethernetAv )},
-		
+	#endif	
 		
 	// ACL
+	#ifdef RTL8370LIB_USE_ACL
 	{ LSTRKEY( "acl_init" ), 					LFUNCVAL( rtl8370_acl_init )},
 	{ LSTRKEY( "acl_createCfg" ), 				LFUNCVAL( rtl8370_acl_createCfg )},
 	{ LSTRKEY( "acl_createAction" ), 			LFUNCVAL( rtl8370_acl_createAction )},
@@ -3395,9 +3413,10 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "acl_unmatchAction" ), 			LFUNCVAL( rtl8370_acl_unmatchAction )},
 	{ LSTRKEY( "acl_state" ), 					LFUNCVAL( rtl8370_acl_state )},
 	{ LSTRKEY( "acl_template" ), 				LFUNCVAL( rtl8370_acl_template )},
-	
+	#endif
 	
 	// Port & PHY
+	#ifdef RTL8370LIB_USE_PORT_PHY
 	{ LSTRKEY( "port_phyAutoNegoAbility" ), 	LFUNCVAL( rtl8370_port_phyAutoNegoAbility )},
 	{ LSTRKEY( "port_phyForceModeAbility" ), 	LFUNCVAL( rtl8370_port_phyForceModeAbility )},
 	{ LSTRKEY( "port_phyStatus" ), 				LFUNCVAL( rtl8370_port_phyStatus )},
@@ -3406,7 +3425,7 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "port_isolation" ), 				LFUNCVAL( rtl8370_port_isolation )},
 	{ LSTRKEY( "port_phyEnableAll" ), 			LFUNCVAL( rtl8370_port_phyEnableAll )},
 	{ LSTRKEY( "port_efid" ), 					LFUNCVAL( rtl8370_port_efid )},
-
+	#endif
 		
 	
 	// Return numbers
