@@ -56,6 +56,7 @@ INCLUDES += -I ../http
 INCLUDES += -I ../sjson
 INCLUDES += -I ../websocket
 INCLUDES += -I ../pm
+INCLUDES += -I ../rtl8370
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 
