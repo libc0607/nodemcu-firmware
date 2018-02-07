@@ -2674,7 +2674,7 @@ static int rtl8370_acl_addField2Cfg(lua_State* L)
 				int mask_bits = luaL_checkinteger(L, 4);
 				os_memset(newField->filter_pattern_union.smac.mask.octet, 0, ETHER_ADDR_LEN);
 				for (int j=0; j<mask_bits; j++) {
-					*((newField->filter_pattern_union.smac.mask.octet)+(j/8)) &= (1<<(7-(j%8)));
+					*((newField->filter_pattern_union.smac.mask.octet)+(j/8)) |= (1<<(7-(j%8)));
 				}
 			} else {
 				// default mask all
@@ -2693,7 +2693,7 @@ static int rtl8370_acl_addField2Cfg(lua_State* L)
 				int mask_bits = luaL_checkinteger(L, 4);
 				os_memset(&(newField->filter_pattern_union.dip.mask), 0, 4);		// clear
 				for (int j=0; j<mask_bits; j++) {
-					*((uint8 *)((&(newField->filter_pattern_union.dip.mask))+(j/8))) &= (1<<(7-(j%8)));
+					*((uint8 *)((&(newField->filter_pattern_union.dip.mask))+(j/8))) |= (1<<(7-(j%8)));
 				}
 			} else {
 				// default mask all
@@ -3260,6 +3260,683 @@ static int rtl8370_port_efid(lua_State* L)
 }
 
 
+//=================== 802.1x ============================
+
+// Lua: status[, unauth_action] = rtl8370.dot1x_unauthPacketOper(port[, unauth_action])
+static int rtl8370_dot1x_unauthPacketOper(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_dot1x_unauth_action_t unauth_action;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_unauthPacketOper_get(port, &unauth_action);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, unauth_action);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		unauth_action = luaL_checkinteger(L, 2);
+		
+		ret = rtk_dot1x_unauthPacketOper_set(port, unauth_action);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.dot1x_eapolFrame2CpuEnable([enable])
+static int rtl8370_dot1x_eapolFrame2CpuEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_dot1x_eapolFrame2CpuEnable_get(&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_eapolFrame2CpuEnable_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.dot1x_portBasedEnable(port[, enable])
+static int rtl8370_dot1x_portBasedEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_portBasedEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_dot1x_portBasedEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, port_auth] = rtl8370.dot1x_portBasedAuthStatus(port[, port_auth])
+static int rtl8370_dot1x_portBasedAuthStatus(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_dot1x_auth_status_t port_auth;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_portBasedAuthStatus_get(port, &port_auth);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, port_auth);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		port_auth = luaL_checkinteger(L, 2);
+		
+		ret = rtk_dot1x_portBasedAuthStatus_set(port, port_auth);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, port_direction] = rtl8370.dot1x_portBasedDirection(port[, port_direction])
+static int rtl8370_dot1x_portBasedDirection(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_dot1x_direction_t port_direction;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_portBasedDirection_get(port, &port_direction);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, port_direction);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		port_direction = luaL_checkinteger(L, 2);
+		
+		ret = rtk_dot1x_portBasedDirection_set(port, port_direction);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.dot1x_macBasedEnable(port[, enable])
+static int rtl8370_dot1x_macBasedEnable(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_port_t port;
+	rtk_enable_t enable;
+
+	if (argc == 1) {
+		// get
+		port = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_macBasedEnable_get(port, &enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 2) {
+		// set
+		port = luaL_checkinteger(L, 1);
+		enable = luaL_checkinteger(L, 2);
+		
+		ret = rtk_dot1x_macBasedEnable_set(port, enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status = rtl8370.dot1x_macBasedAuthMac(operation, port, mac, fid)
+static int rtl8370_dot1x_macmacBasedAuthMac(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	rtk_port_t port;
+	rtk_mac_t mac;
+	rtk_fid_t fid;
+	const char * op_char;
+	const char * mac_char;
+	char * mac_char_buf;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+	port = luaL_checkinteger(L, 2);
+	mac_char = lua_tolstring(L, 3, &length);
+	os_memcpy(mac_char_buf, mac_char, length);
+	mac_char_buf[length] = '\0';
+	rtl8370_tools_strmac_to_byte(mac_char_buf, mac.octet);
+	
+	if (!strcmp(op_char, "add")) {
+		// add
+		ret = rtk_dot1x_macBasedAuthMac_add(port, &mac, fid);
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		ret = rtk_dot1x_macBasedAuthMac_del(port, &mac, fid);
+	}
+
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status[, mac_direction] = rtl8370.dot1x_macBasedDirection([mac_direction])
+static int rtl8370_dot1x_macBasedDirection(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_dot1x_direction_t mac_direction;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_dot1x_macBasedDirection_get(&mac_direction);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, mac_direction);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		mac_direction = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_macBasedDirection_set(mac_direction);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, vid] = rtl8370.dot1x_guestVlan([vid])
+static int rtl8370_dot1x_guestVlan(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_vlan_t vid;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_dot1x_guestVlan_get(&vid);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, vid);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		vid = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_guestVlan_set(vid);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, enable] = rtl8370.dot1x_guestVlan2Auth([enable])
+static int rtl8370_dot1x_guestVlan2Auth(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_enable_t enable;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_dot1x_guestVlan2Auth_get(&enable);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, enable);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		enable = luaL_checkinteger(L, 1);
+		
+		ret = rtk_dot1x_guestVlan2Auth_set(enable);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+
+//=================== SVLAN ============================
+
+// Lua: status = rtl8370.svlan_init()
+static int rtl8370_svlan_init(lua_State* L)
+{
+	rtk_api_ret_t ret;
+	
+	ret = rtk_svlan_init();
+	
+	lua_pushnumber(L, ret);
+	return 1;
+}
+
+// Lua: status = rtl8370.svlan_servicePort(operation[, port])
+static int rtl8370_svlan_servicePort(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	rtk_port_t port;
+	rtk_portmask_t portmask;
+	const char * op_char;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+
+	if (!strcmp(op_char, "add")) {
+		// add
+		port = luaL_checkinteger(L, 2);
+		ret = rtk_svlan_servicePort_add(port);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		port = luaL_checkinteger(L, 2);
+		ret = rtk_svlan_servicePort_del(port);
+		lua_pushnumber(L, ret);
+		return 1;
+	} else if (!strcmp(op_char, "get")) {
+		ret = rtk_svlan_servicePort_get(&portmask);
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, portmask.bits[0]);
+		return 2;
+	}
+}
+
+// Lua: status[, svlan_tag_id] = rtl8370.svlan_tpidEntry([svlan_tag_id])
+static int rtl8370_svlan_tpidEntry(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	uint32 svlan_tag_id;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_svlan_tpidEntry_get(&svlan_tag_id);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svlan_tag_id);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		svlan_tag_id = luaL_checkinteger(L, 1);
+		
+		ret = rtk_svlan_tpidEntry_set(svlan_tag_id);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, svlan_tag_id] = rtl8370.svlan_priorityRef([svlan_tag_id])
+static int rtl8370_svlan_priorityRef(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_svlan_pri_ref_t ref;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_svlan_priorityRef_get(&ref);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, ref);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		ref = luaL_checkinteger(L, 1);
+		
+		ret = rtk_svlan_priorityRef_set(ref);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, svid, member_portmask, fid, priority, efiden, efid] = rtl8370.svlan_memberPortEntry(svid_idx[, svid, member_portmask, fid, priority, efiden, efid])
+static int rtl8370_svlan_memberPortEntry(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	uint32 svid_idx;
+	rtk_svlan_memberCfg_t svlan_cfg;
+
+	if (argc == 1) {
+		// get
+		svid_idx = luaL_checkinteger(L, 1);
+		
+		ret = rtk_svlan_memberPortEntry_get(svid_idx, &svlan_cfg);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svlan_cfg.svid);
+		lua_pushnumber(L, svlan_cfg.memberport);
+		lua_pushnumber(L, svlan_cfg.fid);
+		lua_pushnumber(L, svlan_cfg.priority);
+		lua_pushnumber(L, svlan_cfg.efiden);
+		lua_pushnumber(L, svlan_cfg.efid);
+		
+		return 7;
+	}
+	else if (argc == 7) {
+		// set
+		svid_idx = luaL_checkinteger(L, 1);
+		svlan_cfg.svid = luaL_checkinteger(L, 2);
+		svlan_cfg.memberport = luaL_checkinteger(L, 3);
+		svlan_cfg.fid = luaL_checkinteger(L, 4);
+		svlan_cfg.priority = luaL_checkinteger(L, 5);
+		svlan_cfg.efiden = luaL_checkinteger(L, 6);
+		svlan_cfg.efid = luaL_checkinteger(L, 7);
+		
+		ret = rtk_svlan_memberPortEntry_set(svid_idx, &svlan_cfg);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, svid] = rtl8370.svlan_defaultSvlan([svid])
+static int rtl8370_svlan_defaultSvlan(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret;
+	rtk_vlan_t svid;
+
+	if (argc == 0) {
+		// get
+		ret = rtk_svlan_defaultSvlan_get(&svid);
+
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svid);
+		
+		return 2;
+	}
+	else if (argc == 1) {
+		// set
+		svid = luaL_checkinteger(L, 1);
+		
+		ret = rtk_svlan_defaultSvlan_set(svid);
+		
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else {
+		lua_pushnumber(L, RT_ERR_INPUT);
+		return 1;
+	}
+}
+
+// Lua: status[, svid] = rtl8370.svlan_c2s(operation, vid, port[, svid])
+static int rtl8370_svlan_c2s(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	rtk_vlan_t vid;
+	rtk_port_t port;
+	rtk_vlan_t svid;
+	const char * op_char;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+
+	if (!strcmp(op_char, "add")) {
+		// add
+		vid = luaL_checkinteger(L, 2);
+		port = luaL_checkinteger(L, 3);
+		svid = luaL_checkinteger(L, 4);
+		ret = rtk_svlan_c2s_add(vid, port, svid);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		vid = luaL_checkinteger(L, 2);
+		port = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_c2s_del(vid, port);
+		lua_pushnumber(L, ret);
+		return 1;
+	} else if (!strcmp(op_char, "get")) {
+		vid = luaL_checkinteger(L, 2);
+		port = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_c2s_get(vid, port, &svid);
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svid);
+		return 2;
+	}
+}
+
+// Lua: status = rtl8370.svlan_ipmc2s(operation, ipaddr[, svid])
+static int rtl8370_svlan_ipmc2s(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	ipaddr_t ipmc;
+	rtk_vlan_t svid;
+	const char * op_char;
+	const char * ip_char;
+	char * ip_char_buf;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+	ip_char = lua_tolstring(L, 2, &length);
+	strcpy(ip_char_buf, ip_char);
+	ip_char_buf[length] = '\0';
+	rtl8370_tools_strip_to_byte(ip_char_buf, (uint8 *)&ipmc);
+	
+	if (!strcmp(op_char, "add")) {
+		// add
+		svid = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_ipmc2s_add(ipmc, svid);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		ret = rtk_svlan_ipmc2s_del(ipmc);
+		lua_pushnumber(L, ret);
+		return 1;
+	} else if (!strcmp(op_char, "get")) {
+		ret = rtk_svlan_ipmc2s_get(ipmc, &svid);
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svid);
+		return 2;
+	}
+}
+
+// Lua: status = rtl8370.svlan_l2mc2s(operation, mac[, svid])
+static int rtl8370_svlan_l2mc2s(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	rtk_mac_t mac;
+	rtk_vlan_t svid;
+	const char * op_char;
+	const char * mac_char;
+	char * mac_char_buf;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+	mac_char = lua_tolstring(L, 2, &length);
+	strcpy(mac_char_buf, mac_char);
+	mac_char_buf[length] = '\0';
+	rtl8370_tools_strip_to_byte(mac_char_buf, (uint8 *)&mac.octet);
+	
+	if (!strcmp(op_char, "add")) {
+		// add
+		svid = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_l2mc2s_add(svid, mac);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		ret = rtk_svlan_l2mc2s_del(mac);
+		lua_pushnumber(L, ret);
+		return 1;
+	} else if (!strcmp(op_char, "get")) {
+		ret = rtk_svlan_l2mc2s_get(mac, &svid);
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, svid);
+		return 2;
+	}
+}
+
+// Lua: status = rtl8370.svlan_sp2c(operation, mac[, svid])
+static int rtl8370_svlan_sp2c(lua_State* L)
+{
+	uint32_t argc = lua_gettop(L);
+	rtk_api_ret_t ret = RT_ERR_INPUT;
+	rtk_vlan_t svid;
+	rtk_port_t dst_port;
+	rtk_vlan_t cvid;
+	const char * op_char;
+	size_t length;
+	
+	op_char = lua_tolstring(L, 1, &length);
+
+	if (!strcmp(op_char, "add")) {
+		// add
+		svid = luaL_checkinteger(L, 2);
+		dst_port = luaL_checkinteger(L, 3);
+		cvid = luaL_checkinteger(L, 4);
+		ret = rtk_svlan_sp2c_add(svid, dst_port, cvid);
+		lua_pushnumber(L, ret);
+		return 1;
+	}
+	else if (!strcmp(op_char, "del")) {
+		// del
+		svid = luaL_checkinteger(L, 2);
+		dst_port = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_sp2c_del(svid, dst_port);
+		lua_pushnumber(L, ret);
+		return 1;
+	} else if (!strcmp(op_char, "get")) {
+		svid = luaL_checkinteger(L, 2);
+		dst_port = luaL_checkinteger(L, 3);
+		ret = rtk_svlan_sp2c_get(svid, dst_port, &cvid);
+		lua_pushnumber(L, ret);
+		lua_pushnumber(L, cvid);
+		return 2;
+	}
+}
+
+
+
+
+
 
 
 // Module function map
@@ -3427,6 +4104,35 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "port_efid" ), 					LFUNCVAL( rtl8370_port_efid )},
 	#endif
 		
+	// 802.1x
+	#ifdef RTL8370LIB_USE_DOT1X
+	{ LSTRKEY( "dot1x_unauthPacketOper" ), 		LFUNCVAL( rtl8370_dot1x_unauthPacketOper )},
+	{ LSTRKEY( "dot1x_eapolFrame2CpuEnable" ), 	LFUNCVAL( rtl8370_dot1x_eapolFrame2CpuEnable )},
+	{ LSTRKEY( "dot1x_portBasedEnable" ), 		LFUNCVAL( rtl8370_dot1x_portBasedEnable )},
+	{ LSTRKEY( "dot1x_portBasedAuthStatus" ), 	LFUNCVAL( rtl8370_dot1x_portBasedAuthStatus )},
+	{ LSTRKEY( "dot1x_portBasedDirection" ), 	LFUNCVAL( rtl8370_dot1x_portBasedDirection )},
+	{ LSTRKEY( "dot1x_macBasedEnable" ), 		LFUNCVAL( rtl8370_dot1x_macBasedEnable )},
+	{ LSTRKEY( "dot1x_macBasedAuthMac" ), 		LFUNCVAL( rtl8370_dot1x_macmacBasedAuthMac )},
+	{ LSTRKEY( "dot1x_macBasedDirection" ), 	LFUNCVAL( rtl8370_dot1x_macBasedDirection )},
+	{ LSTRKEY( "dot1x_guestVlan" ), 			LFUNCVAL( rtl8370_dot1x_guestVlan )},
+	{ LSTRKEY( "dot1x_guestVlan2Auth" ), 		LFUNCVAL( rtl8370_dot1x_guestVlan2Auth )},	
+	#endif	
+	
+	// SVLAN
+	#ifdef RTL8370LIB_USE_SVLAN
+	{ LSTRKEY( "svlan_init" ), 				LFUNCVAL( rtl8370_svlan_init )},
+	{ LSTRKEY( "svlan_servicePort" ), 		LFUNCVAL( rtl8370_svlan_servicePort )},
+	{ LSTRKEY( "svlan_tpidEntry" ), 		LFUNCVAL( rtl8370_svlan_tpidEntry )},
+	{ LSTRKEY( "svlan_priorityRef" ), 		LFUNCVAL( rtl8370_svlan_priorityRef )},
+	{ LSTRKEY( "svlan_memberPortEntry" ), 	LFUNCVAL( rtl8370_svlan_memberPortEntry )},
+	{ LSTRKEY( "svlan_defaultSvlan" ), 		LFUNCVAL( rtl8370_svlan_defaultSvlan )},
+	{ LSTRKEY( "svlan_c2s" ), 				LFUNCVAL( rtl8370_svlan_c2s )},
+	{ LSTRKEY( "svlan_ipmc2s" ), 			LFUNCVAL( rtl8370_svlan_ipmc2s )},
+	{ LSTRKEY( "svlan_l2mc2s" ), 			LFUNCVAL( rtl8370_svlan_l2mc2s )},
+	{ LSTRKEY( "svlan_sp2c" ), 				LFUNCVAL( rtl8370_svlan_sp2c )},
+	#endif
+	
+	
 	
 	// Return numbers
 	{ LSTRKEY( "RT_ERR_OK" ), 					LNUMVAL( RT_ERR_OK ) },
@@ -3465,10 +4171,12 @@ static const LUA_REG_TYPE rtl8370_map[] = {
 	{ LSTRKEY( "RT_ERR_PHY_REG_ID"),			LNUMVAL( RT_ERR_PHY_REG_ID ) },
 	{ LSTRKEY( "RT_ERR_BUSYWAIT_TIMEOUT"),		LNUMVAL( RT_ERR_BUSYWAIT_TIMEOUT ) },
 	{ LSTRKEY( "RT_ERR_L2_FID"),				LNUMVAL( RT_ERR_L2_FID ) },
+	{ LSTRKEY( "RT_ERR_SVLAN_VID"),				LNUMVAL( RT_ERR_SVLAN_VID ) },
+	{ LSTRKEY( "RT_ERR_SVLAN_TABLE_FULL"),		LNUMVAL( RT_ERR_SVLAN_TABLE_FULL ) },
+	{ LSTRKEY( "RT_ERR_SVLAN_ENTRY_NOT_FOUND"),	LNUMVAL( RT_ERR_SVLAN_ENTRY_NOT_FOUND ) },
+	{ LSTRKEY( "RT_ERR_DOT1X_PORTBASEDPNEN"),	LNUMVAL( RT_ERR_DOT1X_PORTBASEDPNEN ) },
+	{ LSTRKEY( "RT_ERR_DOT1X_MACBASEDOPDIR"),	LNUMVAL( RT_ERR_DOT1X_MACBASEDOPDIR ) },
 
-
-	
-	
 	// end
 	{ LNILKEY, LNILVAL}
 };
